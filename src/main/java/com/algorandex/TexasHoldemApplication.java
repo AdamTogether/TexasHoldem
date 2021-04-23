@@ -1,4 +1,4 @@
-package com.algorandex.texasholdem;
+package com.algorandex;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
