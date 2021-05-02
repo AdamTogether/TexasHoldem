@@ -11,6 +11,7 @@ public class Game {
 	private Player player2;
 	private GameStatus gameStatus;
 	private int[][] board;
+	private TicTacToe currentTurn;
 	private TicTacToe winner;
 	
 	// SETTER FUNCTIONS
@@ -34,6 +35,10 @@ public class Game {
 
 	public void setBoard(int[][] board) {
 		this.board = board;
+	}
+
+	public void setCurrentTurn(TicTacToe currentTurn) {
+		this.currentTurn = currentTurn;
 	}
 
 	public void setWinner(TicTacToe winner) {

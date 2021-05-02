@@ -49,6 +49,7 @@ public class GameService {
 		
 		game.setPlayer2(player2);
 		game.setGameStatus(IN_PROGRESS);
+        game.setCurrentTurn(TicTacToe.X);
 		GameStorage.getInstance().setGame(game);
 		
 		return game;
@@ -61,6 +62,7 @@ public class GameService {
 		
 		game.setPlayer2(player2);
 		game.setGameStatus(IN_PROGRESS);
+        game.setCurrentTurn(TicTacToe.X);
 		GameStorage.getInstance().setGame(game);
 		
 		return game;
@@ -75,6 +77,10 @@ public class GameService {
 
         if (game.getGameStatus().equals(FINISHED)) {
             throw new InvalidGameException("Game is already finished");
+        }
+        
+        if (!game.getCurrentTurn().equals(gamePlay.getType())) {
+        	throw new InvalidGameException("It's not your turn yet.");
         }
 
         int[][] board = game.getBoard();
@@ -91,6 +97,12 @@ public class GameService {
             game.setGameStatus(FINISHED);
         }
 
+        if (gamePlay.getType().equals(TicTacToe.X)) {
+        	game.setCurrentTurn(TicTacToe.O);
+        } else if (gamePlay.getType().equals(TicTacToe.O)) {
+        	game.setCurrentTurn(TicTacToe.X);
+        }
+        
         GameStorage.getInstance().setGame(game);
 		
 		return game;

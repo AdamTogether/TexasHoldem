@@ -37,13 +37,17 @@ public class GameController {
 	@PostMapping("/connect")
 	public ResponseEntity<Game> connect(@RequestBody ConnectRequest request) throws InvalidParamException, InvalidGameException {
 		log.info("connect request: {}", request);
-		return ResponseEntity.ok(gameService.connectToGame(request.getPlayer(), request.getGameId()));
+		Game game = gameService.connectToGame(request.getPlayer(), request.getGameId());
+		simpMessagingTemplate.convertAndSend("/topic/game-progress/" + game.getGameId(), game);
+		return ResponseEntity.ok(game);
 	}
 	
 	@PostMapping("/connect/random")
 	public ResponseEntity<Game> connectRandom(@RequestBody Player player) throws NotFoundException {
 		log.info("connect random: {}", player);
-		return ResponseEntity.ok(gameService.connectToRandomGame(player));
+		Game game = gameService.connectToRandomGame(player);
+		simpMessagingTemplate.convertAndSend("/topic/game-progress/" + game.getGameId(), game);
+		return ResponseEntity.ok(game);
 	}
 	
 	@PostMapping("/gameplay")
