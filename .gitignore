@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### YAML File ###
+
+src/main/resources/application.yml

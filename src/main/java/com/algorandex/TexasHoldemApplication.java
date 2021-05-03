@@ -7,7 +7,7 @@ import org.springframework.cache.annotation.CacheEvict;
 @SpringBootApplication
 public class TexasHoldemApplication {
 	
-	@CacheEvict
+//	@CacheEvict
 	public static void main(String[] args) {
 		SpringApplication.run(TexasHoldemApplication.class, args);
 	}
