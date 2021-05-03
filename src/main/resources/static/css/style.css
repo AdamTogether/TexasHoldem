@@ -8,6 +8,13 @@ h1, h2, #curGameId, #oponentUsername {
     color: #fff !important;
 }
 
+#logout, #logout a {
+    font-size: 15px;
+    text-align: right;
+    color: #666 !important;
+    margin: 5px;
+}
+
 .clearfix {
     clear: both;
 }

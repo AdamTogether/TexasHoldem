@@ -29,33 +29,35 @@ import lombok.Setter;
 public class AppUser implements UserDetails {
 
 	@SequenceGenerator(
-			name = "student_sequence",
-			sequenceName = "student_sequence",
+			name = "app_user_sequence",
+			sequenceName = "app_user_sequence",
 			allocationSize = 1
 	)
 	@Id
 	@GeneratedValue(
 			strategy = GenerationType.SEQUENCE,
-			generator = "student_sequence"
+			generator = "app_user_sequence"
 	)
 	private Long id;
 	private String firstName;
 	private String lastName;
-	private String username;
+//	private String username;
 	private String password;
 	private String email;
 	@Enumerated(EnumType.STRING)
 	private AppUserRole appUserRole;
-	private Boolean locked;
-	private Boolean enabled;
+	private Boolean locked = false;
+	private Boolean enabled = false;
 	
     public AppUser( String firstName,
 					String lastName,
+//					String username,
 					String email,
 					String password,
 					AppUserRole appUserRole ) {
 		this.firstName = firstName;
 		this.lastName = lastName;
+//		this.username = username;
 		this.email = email;
 		this.password = password;
 		this.appUserRole = appUserRole;
@@ -74,7 +76,7 @@ public class AppUser implements UserDetails {
 
 	@Override
 	public String getUsername() {
-		return username;
+		return email;
 	}
 
 	@Override

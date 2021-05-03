@@ -30,7 +30,7 @@ public class GameService {
 		Player[] players = new Player[8];
 		players[0] = player;
 		game.setPlayers(players);
-		
+
 		GameStorage.getInstance().setGame(game);
 		
 		return game;
