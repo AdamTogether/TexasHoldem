@@ -1,5 +1,7 @@
 package com.algorandex.controller;
 
+import com.algorandex.appuser.AppUser;
+import com.algorandex.appuser.AppUserRepository;
 import com.algorandex.controller.dto.ConnectRequest;
 //import com.algorandex.controller.dto.ConnectRequest;
 import com.algorandex.exception.InvalidGameException;
@@ -11,6 +13,9 @@ import com.algorandex.model.Player;
 import com.algorandex.service.GameService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Optional;
+
 //import org.slf4j.LoggerFactory.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -30,15 +35,33 @@ public class GameController {
 	
 	private final GameService gameService;
 	private final SimpMessagingTemplate simpMessagingTemplate;
+	private final AppUserRepository appUserRepository;
 	
-	@GetMapping(path = "/username")
-	public String login() {
+
+	@GetMapping(path = "/whoami")
+	public String getDetails() {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		return (String) auth.getName();
+		
+		Optional<AppUser> appUserSearch = appUserRepository.findByUsername((String) auth.getName());
+		AppUser appUser = appUserSearch.get();
+		
+		String appUserDetails =	"First Name: " + appUser.getFirstName() +
+								"</br>Last Name: " + appUser.getLastName() +
+								"</br>Username: " + appUser.getUsername() +
+								"</br>Email: " + appUser.getEmail() +
+								"</br>Balance: $" + appUser.getBalance();
+		
+		return appUserDetails;
 	}
 	
 	@PostMapping("/start")
-	public ResponseEntity<Game> start(@RequestBody Player player) {
+	public ResponseEntity<Game> start() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		
+		Optional<AppUser> appUserSearch = appUserRepository.findByUsername((String) auth.getName());
+		AppUser appUser = appUserSearch.get();
+		Player player = new Player(appUser.getUsername());
+		
 		log.info("start game request: {}", player);
 		return ResponseEntity.ok(gameService.createGame(player));
 	}
@@ -52,7 +75,13 @@ public class GameController {
 	}
 	
 	@PostMapping("/connect/random")
-	public ResponseEntity<Game> connectRandom(@RequestBody Player player) throws NotFoundException {
+	public ResponseEntity<Game> connectRandom() throws NotFoundException {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		
+		Optional<AppUser> appUserSearch = appUserRepository.findByUsername((String) auth.getName());
+		AppUser appUser = appUserSearch.get();
+		Player player = new Player(appUser.getUsername());
+		
 		log.info("connect random: {}", player);
 		Game game = gameService.connectToRandomGame(player);
 		simpMessagingTemplate.convertAndSend("/topic/game-progress/" + game.getGameId(), game);

@@ -42,7 +42,7 @@ function displayResponse(data) {
     let board = data.board;
     if (waitingForPlayer) {
         document.getElementById("oponentUsername").innerHTML = "Currently playing with player '" + data.player2.username + "'";
-        alert("'" + data.player2.username + "' has joined the game. Make the first move!");
+        alert("Player '" + data.player2.username + "' has joined the game. Make the first move!");
         waitingForPlayer = false;
     }
 
