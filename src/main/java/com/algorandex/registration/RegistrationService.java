@@ -35,6 +35,7 @@ public class RegistrationService {
 				new AppUser(
 						request.getFirstName(),
 						request.getLastName(),
+						request.getUsername(),
 						request.getEmail(),
 						request.getPassword(),
 						AppUserRole.USER
@@ -63,7 +64,7 @@ public class RegistrationService {
 		
 		confirmationTokenService.setConfirmedAt(token);
 		
-		appUserService.enableAppUser(confirmationToken.getAppUser().getEmail());
+		appUserService.enableAppUser(confirmationToken.getAppUser().getUsername());
 		
 		return "You've successfully confirmed your email!";
 	}

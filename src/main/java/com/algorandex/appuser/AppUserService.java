@@ -18,26 +18,33 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class AppUserService implements UserDetailsService {
 
-	private final static String USER_NOT_FOUND_MSG = "User with email %s not found.";
+	private final static String USER_NOT_FOUND_MSG = "User with username %s not found.";
 	private final AppUserRepository appUserRepository;
 	private final BCryptPasswordEncoder bCryptPasswordEncoder;
 	private final ConfirmationTokenService confirmationTokenService;
 	
+//	@Override
+//	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+//		return appUserRepository.findByEmail(email)
+//				.orElseThrow(() -> 
+//					new UsernameNotFoundException(
+//							String.format(USER_NOT_FOUND_MSG, email)));
+//	}
 	@Override
-	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-		return appUserRepository.findByEmail(email)
+	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+		return appUserRepository.findByUsername(username)
 				.orElseThrow(() -> 
 					new UsernameNotFoundException(
-							String.format(USER_NOT_FOUND_MSG, email)));
+							String.format(USER_NOT_FOUND_MSG, username)));
 	}
 
 	public String signUpUser(AppUser appUser) {
-		boolean userExists = appUserRepository.findByEmail(appUser.getEmail())
-			.isPresent();
 		
-		if (userExists) {
+		if (appUserRepository.findByEmail(appUser.getEmail()).isPresent()) {
 			// TODO: If attributes are the same and email is not confirmed, send another confirmation email.
 			throw new IllegalStateException("email already taken");
+		} else if (appUserRepository.findByUsername(appUser.getUsername()).isPresent()) {
+			throw new IllegalStateException("username already taken");
 		}
 		
 		String encodedPassword = bCryptPasswordEncoder.encode(appUser.getPassword());
@@ -60,8 +67,8 @@ public class AppUserService implements UserDetailsService {
 		return token;
 	}
 
-	public int enableAppUser(String email) {
-		return appUserRepository.enableAppUser(email);
+	public int enableAppUser(String username) {
+		return appUserRepository.enableAppUser(username);
 	}
 	
 }
