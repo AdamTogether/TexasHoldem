@@ -49,33 +49,55 @@ public class GameController {
 								"</br>Last Name: " + appUser.getLastName() +
 								"</br>Username: " + appUser.getUsername() +
 								"</br>Email: " + appUser.getEmail() +
+								"</br>Current Hand: [" + appUser.getCurrentHand()[0] + ", " + appUser.getCurrentHand()[1] + "]" +
 								"</br>Balance: $" + appUser.getBalance();
 		
 		return appUserDetails;
 	}
 	
-	@PostMapping("/start")
-	public ResponseEntity<Game> start() {
+	@PostMapping("/create")
+	public ResponseEntity<Game> create() {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		
 		Optional<AppUser> appUserSearch = appUserRepository.findByUsername((String) auth.getName());
 		AppUser appUser = appUserSearch.get();
 		Player player = new Player(appUser.getUsername());
 		
-		log.info("start game request: {}", player);
+		log.info("create game request: {}", player);
 		return ResponseEntity.ok(gameService.createGame(player));
+	}
+	
+	@PostMapping("/startGame")
+	public ResponseEntity<Game> startGame(@RequestBody GamePlay request) throws NotFoundException, InvalidGameException {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		
+		Optional<AppUser> appUserSearch = appUserRepository.findByUsername((String) auth.getName());
+		AppUser appUser = appUserSearch.get();
+		Player player = new Player(appUser.getUsername());
+		request.setPlayer(player);
+		
+		log.info("start game request: {}", player);
+		Game game = gameService.startGame(request);
+		simpMessagingTemplate.convertAndSend("/topic/game-progress/" + game.getGameId(), game);
+		return ResponseEntity.ok(game);
 	}
 	
 	@PostMapping("/connect")
 	public ResponseEntity<Game> connect(@RequestBody ConnectRequest request) throws InvalidParamException, InvalidGameException {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		
+		Optional<AppUser> appUserSearch = appUserRepository.findByUsername((String) auth.getName());
+		AppUser appUser = appUserSearch.get();
+		Player player = new Player(appUser.getUsername());
+		
 		log.info("connect request: {}", request);
-		Game game = gameService.connectToGame(request.getPlayer(), request.getGameId());
+		Game game = gameService.connectToGame(player, request.getGameId());
 		simpMessagingTemplate.convertAndSend("/topic/game-progress/" + game.getGameId(), game);
 		return ResponseEntity.ok(game);
 	}
 	
 	@PostMapping("/connect/random")
-	public ResponseEntity<Game> connectRandom() throws NotFoundException {
+	public ResponseEntity<Game> connectRandom() throws NotFoundException, InvalidGameException {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		
 		Optional<AppUser> appUserSearch = appUserRepository.findByUsername((String) auth.getName());
@@ -90,6 +112,13 @@ public class GameController {
 	
 	@PostMapping("/gameplay")
 	public ResponseEntity<Game> gamePlay(@RequestBody GamePlay request) throws NotFoundException, InvalidGameException {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		
+		Optional<AppUser> appUserSearch = appUserRepository.findByUsername((String) auth.getName());
+		AppUser appUser = appUserSearch.get();
+		Player player = new Player(appUser.getUsername());
+		request.setPlayer(player);
+		
 		log.info("gameplay: {}", request);
 		Game game = gameService.gamePlay(request);
 		simpMessagingTemplate.convertAndSend("/topic/game-progress/" + game.getGameId(), game);

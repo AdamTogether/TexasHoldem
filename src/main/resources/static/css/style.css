@@ -3,7 +3,7 @@ body {
     color: #666;
 }
 
-h1, h2, #curGameId, #oponentUsername {
+h1, h2, h3, #curGameId, #oponentUsername {
     text-align: center;
     color: #fff !important;
 }
@@ -20,7 +20,7 @@ h1, h2, #curGameId, #oponentUsername {
 }
 
 #box {
-    width: 350px;
+    width: 550px;
     overflow: auto;
     margin: 40px auto;
     background: #666;
@@ -33,7 +33,17 @@ h1, h2, #curGameId, #oponentUsername {
     color: #fff;
 }
 
-#gameBoard li {
+#gameBoard, #myHand {
+    float: center !important;
+    text-align: center;
+}
+
+#myHand {
+    padding-left: 33%;
+    /*padding-right: 35%;*/
+}
+
+#gameBoard li, #myHand li {
     float: left;
     margin: 10px;
     height: 70px;
@@ -46,18 +56,33 @@ h1, h2, #curGameId, #oponentUsername {
     border-radius: 5px;
 }
 
-#gameBoard li:hover, #reset:hover {
-    cursor: pointer;
-    background: #000;
-}
-
-#reset {
+.normalButton, #reset, #check, #fold, #startGame {
+    margin: 5px;
     border: 0;
     background: #444;
     color: #fff;
     width: 70%;
-    padding: 15px;
+    padding: 10px;
     border-radius: 5px;
+}
+
+#bet, #connectByGameId {
+    margin: 5px;
+    border: 0;
+    background: #444;
+    color: #fff;
+    width: 20%;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+#connectByGameId {
+    width: 30%;
+}
+
+#gameBoard li:hover, button:hover, #reset:hover, #check:hover, #fold:hover, #bet:hover, #connectByGameId:hover, #startGame:hover {
+    cursor: pointer;
+    background: #222;
 }
 
 .o {
@@ -72,4 +97,8 @@ footer {
     display: block;
     text-align: center;
     padding-top: 20px;
+}
+
+.hidden {
+    visibility: hidden;
 }

@@ -23,7 +23,7 @@ function createGame() {
     //     alert("Please enter username");
     // } else {
     $.ajax({
-        url: url + "/game/start",
+        url: url + "/game/create",
         type: 'POST',
         dataType: "json",
         contentType: "application/json",
@@ -37,6 +37,7 @@ function createGame() {
             reset();
             connectToSocket(gameId);
             alert("Your created a game. Game id is: " + data.gameId);
+            document.getElementById("startGame").classList.remove("hidden");
             document.getElementById("curGameId").innerHTML = "Game ID: '" + gameId + "'";
             document.getElementById("oponentUsername").innerHTML = "";
             document.getElementById("winner").innerHTML = "";
@@ -69,8 +70,50 @@ function connectToRandom() {
             playerType = 'O';
             reset();
             connectToSocket(gameId);
+            document.getElementById("startGame").classList.remove("hidden");
             document.getElementById("curGameId").innerHTML = "Game ID: '" + gameId + "'";
-            document.getElementById("oponentUsername").innerHTML = "Currently playing with player '" + data.player1.username + "'";
+            document.getElementById("oponentUsername").innerHTML = "Currently playing with player '" + data.players[0].username + "'";
+            document.getElementById("winner").innerHTML = "";
+            gameOn = true;
+            alert("You've joined a game with player '" + data.players[0].username + "'");
+        },
+        error: function (error) {
+            alert("Couldn't find any games, try creating your own!")
+            console.log(error);
+        }
+    })
+    // }
+}
+
+function connectToSpecificGame() {
+    // let username = document.getElementById("username").value;
+    // if (username == null || username === '') {
+    //     alert("Please enter username");
+    // } else {
+    gameId = document.getElementById("gameId").value;
+    if (gameId == null || gameId === '') {
+        alert("Please enter game id");
+    }
+    $.ajax({
+        url: url + "/game/connect",
+        type: 'POST',
+        dataType: "json",
+        contentType: "application/json",
+        data: JSON.stringify({
+            // "player": {
+            //     "username": username
+            // },
+            "gameId": gameId
+        }),
+        success: function (data) {
+            waitingForPlayer = false;
+            gameId = data.gameId;
+            playerType = 'O';
+            reset();
+            connectToSocket(gameId);
+            document.getElementById("startGame").classList.remove("hidden");
+            document.getElementById("curGameId").innerHTML = "Game ID: '" + gameId + "'";
+            document.getElementById("oponentUsername").innerHTML = "Currently playing with player '" + data.players[0].username + "'";
             document.getElementById("winner").innerHTML = "";
             gameOn = true;
             alert("You've joined a game with player '" + data.player1.username + "'");
@@ -80,43 +123,4 @@ function connectToRandom() {
         }
     })
     // }
-}
-
-function connectToSpecificGame() {
-    let username = document.getElementById("username").value;
-    if (username == null || username === '') {
-        alert("Please enter username");
-    } else {
-        gameId = document.getElementById("gameId").value;
-        if (gameId == null || gameId === '') {
-            alert("Please enter game id");
-        }
-        $.ajax({
-            url: url + "/game/connect",
-            type: 'POST',
-            dataType: "json",
-            contentType: "application/json",
-            data: JSON.stringify({
-                "player": {
-                    "username": username
-                },
-                "gameId": gameId
-            }),
-            success: function (data) {
-                waitingForPlayer = false;
-                gameId = data.gameId;
-                playerType = 'O';
-                reset();
-                connectToSocket(gameId);
-                document.getElementById("curGameId").innerHTML = "Game ID: '" + gameId + "'";
-                document.getElementById("oponentUsername").innerHTML = "Currently playing with player '" + data.player1.username + "'";
-                document.getElementById("winner").innerHTML = "";
-                gameOn = true;
-                alert("You've joined a game with player '" + data.player1.username + "'");
-            },
-            error: function (error) {
-                console.log(error);
-            }
-        })
-    }
 }

@@ -1,18 +1,21 @@
 package com.algorandex.model;
 
+import com.algorandex.appuser.AppUserRepository;
+
 import lombok.Data;
 
 @Data
 public class Game {
 	
+//	private final AppUserRepository appUserRepository;
+	
 	private String gameId;
 	private Player[] players;
-	private Player player1;
-	private Player player2;
 	private GameStatus gameStatus;
-	private int[][] board;
-	private TicTacToe currentTurn;
-	private TicTacToe winner;
+	private String[] board;
+	private Integer pot = 0;
+	private Player currentTurn;
+	private Player winner;
 	
 	// SETTER FUNCTIONS
 	public void setGameId(String gameId) {
@@ -21,27 +24,38 @@ public class Game {
 	
 	public void setPlayers(Player[] players) {
 		this.players = players;
-		this.player1 = players[0];
 	}
-	
-	public void setPlayer2(Player player) {
-		this.players[1] = player;
-		this.player2 = player;
+
+	public void addPlayer(Player player) {
+		for (int i = 0; i < this.players.length; i++) {
+			if (players[i] == null) {
+				this.players[i] = player;
+				break;
+			}
+		}
 	}
 	
 	public void setGameStatus(GameStatus gameStatus) {
 		this.gameStatus = gameStatus;
 	}
 
-	public void setBoard(int[][] board) {
+	public void setBoard(String[] board) {
 		this.board = board;
 	}
 
-	public void setCurrentTurn(TicTacToe currentTurn) {
+	public void setPot(Integer pot) {
+		this.pot = pot;
+	}
+	
+	public void addToPot(Integer pot) {
+		this.pot += pot;
+	}
+
+	public void setCurrentTurn(Player currentTurn) {
 		this.currentTurn = currentTurn;
 	}
 
-	public void setWinner(TicTacToe winner) {
+	public void setWinner(Player winner) {
 		this.winner = winner;
 	}
 	
@@ -58,9 +72,19 @@ public class Game {
 		return this.gameStatus;
 	}
 
-	public int[][] getBoard() {
+	public String[] getBoard() {
 		return this.board;
 	}
 	
+	public Integer getPot() {
+		return this.pot;
+	}
 	
+	public Player getCurrentTurn() {
+		return this.currentTurn;
+	}
+	
+	public Player getWinner() {
+		return this.winner;
+	}
 }

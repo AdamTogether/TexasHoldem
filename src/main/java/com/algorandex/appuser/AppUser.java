@@ -44,7 +44,8 @@ public class AppUser implements UserDetails {
 	private String username;
 	private String email;
 	private String password;
-	private Integer balance;	
+	private Integer balance;
+	private String[] currentHand;
 	@Enumerated(EnumType.STRING)
 	private AppUserRole appUserRole;
 	private Boolean locked = false;
@@ -63,6 +64,7 @@ public class AppUser implements UserDetails {
 		this.password = password;
 		this.appUserRole = appUserRole;
 		this.balance = 1000;
+		this.currentHand = null;
 	}
 	
 	@Override
@@ -87,6 +89,14 @@ public class AppUser implements UserDetails {
 	
 	public Integer getBalance() {
 		return balance;
+	}
+	
+	public String[] getCurrentHand() {
+		return this.currentHand;
+	}
+	
+	public void setCurrentHand(String[] cards) {
+		this.currentHand = cards;
 	}
 
 	@Override

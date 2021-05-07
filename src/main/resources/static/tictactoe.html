@@ -19,28 +19,44 @@
 <div id="logout"><a href="/logout">Logout</a></div>
 <div class="text-center" id="box">
     <header>
-        <h1>Play Tic Tac Toe</h1>
+        <h1>Play Texas Holdem</h1>
         <p id="curGameId"></p>
     </header>
     <!-- <input id="username" placeholder="Place a Username here"> -->
-    <button onclick="createGame()">Create a new game</button>
+    <button class="normalButton" onclick="createGame()">Create a new game</button>
     </br>
-    <button onclick="connectToRandom()">Connect to random game</button>
+    <button class="normalButton" onclick="connectToRandom()">Connect to random game</button>
+    </br>
     <input id="gameId" placeholder="Paste game id">
-    <button onclick="connectToSpecificGame()">Connect by game id</button>
+    <button id="connectByGameId" onclick="connectToSpecificGame()">Connect by game id</button>
     <div id="message"></div>
+    </br>
+    </br>
+    <button class="normalButton hidden" id="startGame" onclick="startGame()">Start Game</button>
+    <h3 id="currentTurn"></h3>
+    <h2>Game Board</h2>
     <ul id="gameBoard">
-        <li class="tic" id="0_0"></li>
-        <li class="tic" id="0_1"></li>
-        <li class="tic" id="0_2"></li>
-        <li class="tic" id="1_0"></li>
-        <li class="tic" id="1_1"></li>
-        <li class="tic" id="1_2"></li>
-        <li class="tic" id="2_0"></li>
-        <li class="tic" id="2_1"></li>
-        <li class="tic" id="2_2"></li>
+        <li class="boardCard" id="0_0"></li>
+        <li class="boardCard" id="0_1"></li>
+        <li class="boardCard" id="0_2"></li>
+        <li class="boardCard" id="0_3"></li>
+        <li class="boardCard" id="0_4"></li>
+    </ul>
+    </br>
+    <div class="clearfix"></div>
+    <h2>My Hand</h2>
+    <ul id="myHand">
+        <li class="myCard" id="1_0"></li>
+        <li class="myCard" id="1_1"></li>
     </ul>
     <div class="clearfix"></div>
+    <button class="move" id="check">Check</button>
+    </br>
+    <input id="betAmount" placeholder="Bet amount">
+    <button class="move" id="bet">Bet</button>
+    </br>
+    <button class="move" id="fold">Fold</button>
+    </br>
     <h2 id="winner"></h2>
     <h4 id="oponentUsername"></h4>
 </div>

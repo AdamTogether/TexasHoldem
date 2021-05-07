@@ -5,27 +5,31 @@ import lombok.Data;
 @Data
 public class GamePlay {
 	
-	private TicTacToe type;
-	private Integer coordinateX;
-	private Integer coordinateY;
+	private Player player;
+	private HoldemMoveType move;
+	private Integer betAmount;
 	private String gameId;
 	
 	// SETTER FUNCTIONS
+	public void setPlayer(Player player) {
+		this.player = player;
+	}
+	
 	public void setGameId(String gameId) {
 		this.gameId = gameId;
 	}
 	
 	// GETTER FUNCTIONS
-	public TicTacToe getType() {
-		return type;
+	public Player getPlayer() {
+		return this.player;
+	}
+	
+	public HoldemMoveType getMove() {
+		return this.move;
 	}
 
-	public int getCoordinateX() {
-		return coordinateX;
-	}
-
-	public int getCoordinateY() {
-		return coordinateY;
+	public int getBetAmount() {
+		return this.betAmount;
 	}
 	
 	public String getGameId() {
