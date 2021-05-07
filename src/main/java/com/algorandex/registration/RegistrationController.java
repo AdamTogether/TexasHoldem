@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import lombok.AllArgsConstructor;
 
 @Controller
-//Rest@Controller
+//@RestController
 //@RequestMapping(path = "api/v1/registration")
 //@RequestMapping(path = "registration")
 @AllArgsConstructor
@@ -29,7 +29,6 @@ public class RegistrationController {
 	@PostMapping(path = "/register", consumes = "application/x-www-form-urlencoded")
 	public String register(RegistrationRequest request) {
 		registrationService.register(request);
-//		return "A confirmation email has been sent to '" + request.getEmail() + "'";
 		return "confirmation-email-notification";
 	}
 	
@@ -42,8 +41,6 @@ public class RegistrationController {
 	public String confirm(@RequestParam("token") String token) {
 		registrationService.confirmToken(token);
 
-//		return "Email confirmed.</br></br><a href=\"login\">Click here to sign in</a>";
 		return "email-confirmed";
-//		return registrationService.confirmToken(token);
 	}
 }
