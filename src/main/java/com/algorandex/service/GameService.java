@@ -9,6 +9,8 @@ import com.algorandex.model.Game;
 import com.algorandex.model.GamePlay;
 
 import static com.algorandex.model.GameStatus.*;
+import static com.algorandex.model.HoldemMoveType.*;
+import static com.algorandex.model.GameRoundType.*;
 import com.algorandex.model.Player;
 import com.algorandex.model.TicTacToe;
 import com.algorandex.storage.GameStorage;
@@ -17,6 +19,7 @@ import lombok.AllArgsConstructor;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.stereotype.Service;
 
@@ -25,6 +28,8 @@ import org.springframework.stereotype.Service;
 public class GameService {
 	
 	private final AppUserRepository appUserRepository;
+	private final String[] suites = {"hearts", "spades" ,"diamonds", "clubs"};
+	private final String[] values = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"};
 
 	public Game createGame(Player player) {
 		Game game = new Game();
@@ -42,6 +47,14 @@ public class GameService {
 		return game;
 	}
 	
+	public String getRandomCard() {
+		int randomSuiteNum = ThreadLocalRandom.current().nextInt(0, suites.length);
+		int randomValueNum = ThreadLocalRandom.current().nextInt(0, values.length);
+		String randomCard = String.format("%s_%s", suites[randomSuiteNum], values[randomValueNum]);
+		
+		return randomCard;
+	}
+	
 	public Game startGame(GamePlay gamePlay) throws NotFoundException, InvalidGameException {
 		if(!GameStorage.getInstance().getGames().containsKey(gamePlay.getGameId())) {
 			throw new NotFoundException("Game not found");
@@ -54,6 +67,7 @@ public class GameService {
         }
         
         game.setGameStatus(IN_PROGRESS);
+        game.setCurrentRound(START);
         game.setCurrentTurn(game.getPlayers()[0]);
 //        if (game.getPlayers()[2] != null) {
 //        	game.setGameStatus(IN_PROGRESS);
@@ -66,9 +80,10 @@ public class GameService {
         	} else {
         		Optional<AppUser> appUserSearch = appUserRepository.findByUsername(game.getPlayers()[i].getUsername());
         		AppUser appUser = appUserSearch.get();
+        		
         		String[] testHand = new String[2];
-        		testHand[0] = "spade_5";
-        		testHand[1] = "heart_K";
+        		testHand[0] = getRandomCard();
+        		testHand[1] = getRandomCard();
         		appUser.setCurrentHand(testHand);
         		appUserRepository.save(appUser);
         	}
@@ -93,7 +108,6 @@ public class GameService {
 		}
 		
 		game.addPlayer(newPlayer);
-//        game.setCurrentTurn(game.getPlayers()[0]);
 		GameStorage.getInstance().setGame(game);
 		
 		return game;
@@ -110,27 +124,52 @@ public class GameService {
 		}
 		
 		game.addPlayer(newPlayer);
-//        game.setCurrentTurn(game.getPlayers()[0]);
 		GameStorage.getInstance().setGame(game);
 		
 		return game;
 	}
 	
 	public Game gamePlay(GamePlay gamePlay) throws NotFoundException, InvalidGameException {
+		System.out.println("\ngamePlay: '" + gamePlay + "'");
 		if(!GameStorage.getInstance().getGames().containsKey(gamePlay.getGameId())) {
 			throw new NotFoundException("Game not found");
 		}
 		
         Game game = GameStorage.getInstance().getGames().get(gamePlay.getGameId());
-
+		System.out.println("\nGameStorage.getInstance().getGames(): '" + GameStorage.getInstance().getGames() + "'");
+        
+        System.out.format("gamePlay.getPlayer().getUsername(): %s\n\n", gamePlay.getPlayer().getUsername());
+    	System.out.format("game.getCurrentTurn().getUsername(): %s\n\n", game.getCurrentTurn().getUsername());
+    	System.out.format("game.getCurrentTurnIndex(): %s\n\n", game.getCurrentTurnIndex());
+    	System.out.format("game.getPlayers()[game.getCurrentTurnIndex()]: %s\n\n", game.getPlayers()[game.getCurrentTurnIndex()]);
+		
+		if (game.getGameStatus().equals(NEW)) {
+        	System.out.println("\nThe game hasn't started yet.");
+        	throw new InvalidGameException("The game hasn't started yet.");
+ 
+        } 
+		
         if (game.getGameStatus().equals(FINISHED)) {
-            throw new InvalidGameException("Game is already finished");
+        	System.out.println("Game is already finished.");
+            throw new InvalidGameException("Game is already finished.");
         }
         
-        if (!game.getCurrentTurn().equals(gamePlay.getPlayer())) {
+        if (!game.getCurrentTurn().getUsername().equals(gamePlay.getPlayer().getUsername())) {
+        	System.out.println("\nIt's not your turn yet.");
         	throw new InvalidGameException("It's not your turn yet.");
         }
-        
+
+        if (gamePlay.getMove().equals(CHECK)) {
+        	// TODO: Check checkAmount, if non-zero perform bet logic.
+        	;
+        } else if (gamePlay.getMove().equals(BET)) {
+        	game.addToPot(gamePlay.getBetAmount());
+        	game.addToCheckAmount(gamePlay.getBetAmount());
+        	// TODO: Subtract from player's balance.
+        } else if (gamePlay.getMove().equals(FOLD)) {
+        	;
+        }
+
 //        int[][] board = game.getBoard();
 //        board[gamePlay.getCoordinateX()][gamePlay.getCoordinateY()] = gamePlay.getType().getValue();
 //
@@ -150,6 +189,39 @@ public class GameService {
 //        } else if (gamePlay.getType().equals(TicTacToe.O)) {
 //        	game.setCurrentTurn(game.getPlayers()[0]);
 //        }
+    	
+
+        // If it is the last player in the lobbies' turn, reset the current turn to the first player in the lobby.
+        if (game.getCurrentTurnIndex()+1 == game.getCurrentPlayerCount()) {
+        	
+        	game.setCurrentTurn(game.getPlayers()[0]);
+        	game.setCheckAmount(0);
+        	
+        	// Advance to the next round and TODO: Draw cards appropriate to current round.
+        	if (game.getCurrentRound().equals(START)) {
+            	game.setCurrentRound(FLOP);
+            	String[] tempBoard = {getRandomCard(), getRandomCard(), getRandomCard(), null, null};
+            	game.setBoard(tempBoard);
+            } else if (game.getCurrentRound().equals(FLOP)) {
+            	game.setCurrentRound(TURN);
+            	String[] tempBoard = {game.getBoard()[0], game.getBoard()[1], game.getBoard()[2], getRandomCard(), null};
+            	game.setBoard(tempBoard);
+            } else if (game.getCurrentRound().equals(TURN)) {
+//            	game.setCurrentRound(RIVER);
+            	String[] tempBoard = {game.getBoard()[0], game.getBoard()[1], game.getBoard()[2], game.getBoard()[3], getRandomCard()};
+            	game.setCurrentTurn(null);
+            	game.setGameStatus(FINISHED);
+            	game.setBoard(tempBoard);
+            } else if (game.getCurrentRound().equals(RIVER)) {
+            	game.setCurrentTurn(null);
+            	game.setGameStatus(FINISHED);
+            	// TODO: Evaluate winner.
+            	// TODO: Clear currentHands.
+            }
+        // Otherwise, set the current turn to the next player in the lobby
+        } else {
+        	game.setCurrentTurn(game.getPlayers()[game.getCurrentTurnIndex()+1]);
+        }
         
         GameStorage.getInstance().setGame(game);
 		
@@ -157,28 +229,28 @@ public class GameService {
 	}
 
 	private Boolean checkWinner(int[][] board, TicTacToe ticTacToe) {
-	       int[] boardArray = new int[9];
-	        int counterIndex = 0;
-	        for (int i = 0; i < board.length; i++) {
-	            for (int j = 0; j < board[i].length; j++) {
-	                boardArray[counterIndex] = board[i][j];
-	                counterIndex++;
-	            }
-	        }
+		int[] boardArray = new int[9];
+		int counterIndex = 0;
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                boardArray[counterIndex] = board[i][j];
+                counterIndex++;
+            }
+        }
 
-	        int[][] winCombinations = {{0, 1, 2}, {3, 4, 5}, {6, 7, 8}, {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, {0, 4, 8}, {2, 4, 6}};
-	        for (int i = 0; i < winCombinations.length; i++) {
-	            int counter = 0;
-	            for (int j = 0; j < winCombinations[i].length; j++) {
-	                if (boardArray[winCombinations[i][j]] == ticTacToe.getValue()) {
-	                    counter++;
-	                    if (counter == 3) {
-	                        return true;
-	                    }
-	                }
-	            }
-	        }
+        int[][] winCombinations = {{0, 1, 2}, {3, 4, 5}, {6, 7, 8}, {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, {0, 4, 8}, {2, 4, 6}};
+        for (int i = 0; i < winCombinations.length; i++) {
+            int counter = 0;
+            for (int j = 0; j < winCombinations[i].length; j++) {
+                if (boardArray[winCombinations[i][j]] == ticTacToe.getValue()) {
+                    counter++;
+                    if (counter == 3) {
+                        return true;
+                    }
+                }
+            }
+        }
 	        
-	        return false;
+        return false;
 	}
 }

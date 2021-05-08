@@ -1,7 +1,25 @@
 const url = 'http://localhost:8080';
 let stompClient;
-let gameId;
+let GAME_ID;
 let playerType;
+
+function getMyCurrentHand() {
+        $.ajax({
+        url: url + "/game/myHand",
+        type: 'GET',
+        dataType: "json",
+        contentType: "application/json",
+        success: function (currentHand) {
+            console.log("Current hand: " + currentHand);
+            for (let i = 0; i < currentHand.length; i++) {
+                $("#hand_" + i.toString()).text(currentHand[i]);
+            }
+        },
+        error: function (error) {
+            console.log(error);
+        }
+    })
+}
 
 function connectToSocket(gameId) {
     console.log("connecting to the game");
@@ -14,113 +32,97 @@ function connectToSocket(gameId) {
             console.log(data);
             displayResponse(data);
         })
-    })
+    });
 }
 
 function createGame() {
-    // let username = document.getElementById("username").value;
-    // if (username == null || username === '') {
-    //     alert("Please enter username");
-    // } else {
     $.ajax({
         url: url + "/game/create",
         type: 'POST',
         dataType: "json",
         contentType: "application/json",
-        // data: JSON.stringify({
-        //     "username": username
-        // }),
         success: function (data) {
             waitingForPlayer = true;
-            gameId = data.gameId;
-            playerType = 'X';
+            GAME_ID = data.gameId;
             reset();
-            connectToSocket(gameId);
+            connectToSocket(data.gameId);
             alert("Your created a game. Game id is: " + data.gameId);
-            document.getElementById("startGame").classList.remove("hidden");
-            document.getElementById("curGameId").innerHTML = "Game ID: '" + gameId + "'";
-            document.getElementById("oponentUsername").innerHTML = "";
-            document.getElementById("winner").innerHTML = "";
             gameOn = true;
         },
         error: function (error) {
             console.log(error);
         }
-    })
-    // }
+    });
 }
 
+function startGame() {
+    $.ajax({
+        url: url + "/game/startGame",
+        type: 'POST',
+        dataType: "json",
+        contentType: "application/json",
+        data: JSON.stringify({
+            "player": null,
+            "move": null,
+            "betAmount": null,
+            "gameId": GAME_ID
+        }),
+        success: function (data) {
+            console.log(data);
+        },
+        error: function (error) {
+            alert("Couldn't start match.");
+            console.log(error);
+        }
+    });
+}
 
 function connectToRandom() {
-    // let username = document.getElementById("username").value;
-    // if (username == null || username === '') {
-    //     alert("Please enter username");
-    // } else {
     $.ajax({
         url: url + "/game/connect/random",
         type: 'POST',
         dataType: "json",
         contentType: "application/json",
-        // data: JSON.stringify({
-        //     "username": username
-        // }),
         success: function (data) {
             waitingForPlayer = false;
-            gameId = data.gameId;
-            playerType = 'O';
+            GAME_ID = data.gameId;
             reset();
-            connectToSocket(gameId);
-            document.getElementById("startGame").classList.remove("hidden");
-            document.getElementById("curGameId").innerHTML = "Game ID: '" + gameId + "'";
-            document.getElementById("oponentUsername").innerHTML = "Currently playing with player '" + data.players[0].username + "'";
-            document.getElementById("winner").innerHTML = "";
+            connectToSocket(data.gameId);
             gameOn = true;
-            alert("You've joined a game with player '" + data.players[0].username + "'");
+            alert("You've joined a game hosted by player '" + data.players[0].username + "'.");
         },
         error: function (error) {
-            alert("Couldn't find any games, try creating your own!")
+            alert("Couldn't find any games, try creating your own!");
             console.log(error);
         }
-    })
-    // }
+    });
 }
 
 function connectToSpecificGame() {
-    // let username = document.getElementById("username").value;
-    // if (username == null || username === '') {
-    //     alert("Please enter username");
-    // } else {
-    gameId = document.getElementById("gameId").value;
-    if (gameId == null || gameId === '') {
+    GAME_ID = document.getElementById("gameId").value;
+
+    if (GAME_ID == null || GAME_ID === '') {
         alert("Please enter game id");
     }
+
     $.ajax({
         url: url + "/game/connect",
         type: 'POST',
         dataType: "json",
         contentType: "application/json",
         data: JSON.stringify({
-            // "player": {
-            //     "username": username
-            // },
-            "gameId": gameId
+            "gameId": GAME_ID
         }),
         success: function (data) {
             waitingForPlayer = false;
             gameId = data.gameId;
-            playerType = 'O';
             reset();
-            connectToSocket(gameId);
-            document.getElementById("startGame").classList.remove("hidden");
-            document.getElementById("curGameId").innerHTML = "Game ID: '" + gameId + "'";
-            document.getElementById("oponentUsername").innerHTML = "Currently playing with player '" + data.players[0].username + "'";
-            document.getElementById("winner").innerHTML = "";
+            connectToSocket(data.gameId);
             gameOn = true;
-            alert("You've joined a game with player '" + data.player1.username + "'");
+            alert("You've joined a game with player '" + data.players[0].username + "'");
         },
         error: function (error) {
             console.log(error);
         }
     })
-    // }
 }

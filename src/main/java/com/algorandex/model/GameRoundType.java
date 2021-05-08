@@ -5,8 +5,8 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public enum HoldemMoveType {
-	CHECK(1), BET(2), FOLD(3);
+public enum GameRoundType {
+	START(1), FLOP(2), TURN(3), RIVER(4);
 	
 	private Integer value;
 	

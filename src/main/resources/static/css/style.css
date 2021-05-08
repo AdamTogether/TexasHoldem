@@ -3,7 +3,7 @@ body {
     color: #666;
 }
 
-h1, h2, h3, #curGameId, #oponentUsername {
+h1, h2, h3, #curGameId, #oponentUsername, #pot {
     text-align: center;
     color: #fff !important;
 }
@@ -46,9 +46,10 @@ h1, h2, h3, #curGameId, #oponentUsername {
 #gameBoard li, #myHand li {
     float: left;
     margin: 10px;
+    padding: auto;
     height: 70px;
     width: 70px;
-    font-size: 50px;
+    font-size: 10px;
     background: #333;
     color: #ccc;
     list-style: none;
@@ -71,7 +72,7 @@ h1, h2, h3, #curGameId, #oponentUsername {
     border: 0;
     background: #444;
     color: #fff;
-    width: 20%;
+    width: 10%;
     padding: 10px;
     border-radius: 5px;
 }

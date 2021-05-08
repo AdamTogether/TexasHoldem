@@ -1,42 +1,18 @@
-var turns = [["#", "#", "#"], ["#", "#", "#"], ["#", "#", "#"]];
+// var turns = [["#", "#", "#"], ["#", "#", "#"], ["#", "#", "#"]];
 var turn = "";
 var gameOn = false;
 var waitingForPlayer = true;
-
-function startGame() {
-    $.ajax({
-        url: url + "/game/startGame",
-        type: 'POST',
-        dataType: "json",
-        contentType: "application/json",
-        data: JSON.stringify({
-            "player": null,
-            "move": null,
-            "betAmount": null,
-            "gameId": gameId
-        }),
-        success: function (data) {
-            // document.getElementById("currentTurn").innerHTML = "Current turn: '" + data.currentTurn.username + "'";
-            console.log(data);
-        },
-        error: function (error) {
-            alert("Couldn't start match.");
-            console.log(error);
-        }
-    });
-}
 
 function check() {
     makeAMove("CHECK", 0);
 }
 
-function playerTurn(turn, id) {
-    if (gameOn) {
-        var spotTaken = $("#" + id).text();
-        if (spotTaken === "#") {
-            makeAMove(playerType, id.split("_")[0], id.split("_")[1]);
-        }
-    }
+function bet() {
+    makeAMove("BET", document.getElementById("betAmount").value);
+}
+
+function fold() {
+    makeAMove("FOLD", 0);
 }
 
 function makeAMove(move, betAmount) {
@@ -49,7 +25,7 @@ function makeAMove(move, betAmount) {
             "player": null,
             "move": move,
             "betAmount": betAmount,
-            "gameId": gameId
+            "gameId": GAME_ID
         }),
         success: function (data) {
             console.log(data);
@@ -64,17 +40,28 @@ function makeAMove(move, betAmount) {
 function displayResponse(data) {
     let board = data.board;
 
+    console.log("board: '" + board + "'");
+
+    getMyCurrentHand();
+
     if (data.gameStatus == "IN_PROGRESS") {
+        $("#pot").text("Pot: $" + data.pot);
         document.getElementById("startGame").classList.add("hidden");
-        document.getElementById("currentTurn").innerHTML = "Current turn: '" + data.currentTurn.username + "'";
+        if (data.currentTurn.username != null) {
+            document.getElementById("currentTurn").innerHTML = "Current turn: '" + data.currentTurn.username + "'";
+        }
     } else if (data.gameStatus == "NEW") {
         document.getElementById("startGame").classList.remove("hidden");
     }
 
     if (waitingForPlayer) {
         document.getElementById("oponentUsername").innerHTML = "Currently playing with player '" + data.players[1].username + "'";
-        alert("Player '" + data.players[1].username + "' has joined the game. Make the first move!");
+        alert("Player '" + data.players[1].username + "' has joined the game.");
         waitingForPlayer = false;
+    }
+
+    for (let i = 0; i < board.length; i++) {
+        $("#board_" + i.toString()).text(board[i]);
     }
 
     // for (let i = 0; i < board.length; i++) {
@@ -97,16 +84,30 @@ function displayResponse(data) {
     // }
 }
 
-$(".tic").click(function () {
-    var slot = $(this).attr('id');
-    playerTurn(turn, slot);
-});
-
 function reset() {
-    turns = [["#", "#", "#"], ["#", "#", "#"], ["#", "#", "#"]];
+    // turns = [["#", "#", "#"], ["#", "#", "#"], ["#", "#", "#"]];
     $(".tic").text("#");
+    document.getElementById("startGame").classList.remove("hidden");
+    document.getElementById("currentTurn").innerHTML = "";
+    document.getElementById("curGameId").innerHTML = "Game ID: '" + GAME_ID + "'";
+    document.getElementById("oponentUsername").innerHTML = "";
+    document.getElementById("winner").innerHTML = "";
 }
 
-$("#reset").click(function () {
-    reset();
-});
+// function playerTurn(turn, id) {
+//     if (gameOn) {
+//         var spotTaken = $("#" + id).text();
+//         if (spotTaken === "#") {
+//             makeAMove(playerType, id.split("_")[0], id.split("_")[1]);
+//         }
+//     }
+// }
+
+// $(".tic").click(function () {
+//     var slot = $(this).attr('id');
+//     playerTurn(turn, slot);
+// });
+
+// $("#reset").click(function () {
+//     reset();
+// });

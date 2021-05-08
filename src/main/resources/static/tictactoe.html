@@ -34,28 +34,29 @@
     </br>
     <button class="normalButton hidden" id="startGame" onclick="startGame()">Start Game</button>
     <h3 id="currentTurn"></h3>
+    <p id="pot"></p>
     <h2>Game Board</h2>
     <ul id="gameBoard">
-        <li class="boardCard" id="0_0"></li>
-        <li class="boardCard" id="0_1"></li>
-        <li class="boardCard" id="0_2"></li>
-        <li class="boardCard" id="0_3"></li>
-        <li class="boardCard" id="0_4"></li>
+        <li class="boardCard" id="board_0"></li>
+        <li class="boardCard" id="board_1"></li>
+        <li class="boardCard" id="board_2"></li>
+        <li class="boardCard" id="board_3"></li>
+        <li class="boardCard" id="board_4"></li>
     </ul>
     </br>
     <div class="clearfix"></div>
     <h2>My Hand</h2>
     <ul id="myHand">
-        <li class="myCard" id="1_0"></li>
-        <li class="myCard" id="1_1"></li>
+        <li class="myCard" id="hand_0"></li>
+        <li class="myCard" id="hand_1"></li>
     </ul>
     <div class="clearfix"></div>
-    <button class="move" id="check">Check</button>
+    <button class="move" id="check" onclick="check()">Check</button>
     </br>
     <input id="betAmount" placeholder="Bet amount">
-    <button class="move" id="bet">Bet</button>
+    <button class="move" id="bet" onclick="bet()">Bet</button>
     </br>
-    <button class="move" id="fold">Fold</button>
+    <button class="move" id="fold" onclick="fold()">Fold</button>
     </br>
     <h2 id="winner"></h2>
     <h4 id="oponentUsername"></h4>

@@ -49,10 +49,20 @@ public class GameController {
 								"</br>Last Name: " + appUser.getLastName() +
 								"</br>Username: " + appUser.getUsername() +
 								"</br>Email: " + appUser.getEmail() +
-								"</br>Current Hand: [" + appUser.getCurrentHand()[0] + ", " + appUser.getCurrentHand()[1] + "]" +
+//								"</br>Current Hand: [" + appUser.getCurrentHand()[0] + ", " + appUser.getCurrentHand()[1] + "]" +
 								"</br>Balance: $" + appUser.getBalance();
 		
-		return appUserDetails;
+		return appUser.getUsername();
+	}
+	
+	@GetMapping(path = "/myHand")
+	public String[] getMyHand() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		
+		Optional<AppUser> appUserSearch = appUserRepository.findByUsername((String) auth.getName());
+		AppUser appUser = appUserSearch.get();
+		
+		return appUser.getCurrentHand();
 	}
 	
 	@PostMapping("/create")
