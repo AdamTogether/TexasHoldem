@@ -43,6 +43,14 @@ public class GameService {
         game.setCurrentTurn(player);
 
 		GameStorage.getInstance().setGame(game);
+
+		Optional<AppUser> appUserSearch = appUserRepository.findByUsername(game.getPlayers()[game.getPlayerIndexByUsername(player.getUsername())].getUsername());
+		AppUser appUser = appUserSearch.get();
+
+		appUser.setAmountBetThisRound(0);
+		appUser.setCurrentHand(null);
+		appUser.setFolded(false);
+		appUserRepository.save(appUser);
 		
 		return game;
 	}
@@ -80,15 +88,17 @@ public class GameService {
         	} else {
         		Optional<AppUser> appUserSearch = appUserRepository.findByUsername(game.getPlayers()[i].getUsername());
         		AppUser appUser = appUserSearch.get();
-        		
+
         		String[] testHand = new String[2];
         		testHand[0] = getRandomCard();
         		testHand[1] = getRandomCard();
+        		appUser.setAmountBetThisRound(0);
         		appUser.setCurrentHand(testHand);
+        		appUser.setFolded(false);
         		appUserRepository.save(appUser);
         	}
         }
-		
+        
         return game;
 	}
 	
@@ -110,6 +120,14 @@ public class GameService {
 		game.addPlayer(newPlayer);
 		GameStorage.getInstance().setGame(game);
 		
+		Optional<AppUser> appUserSearch = appUserRepository.findByUsername(game.getPlayers()[game.getPlayerIndexByUsername(newPlayer.getUsername())].getUsername());
+		AppUser appUser = appUserSearch.get();
+
+		appUser.setAmountBetThisRound(0);
+		appUser.setCurrentHand(null);
+		appUser.setFolded(false);
+		appUserRepository.save(appUser);
+		
 		return game;
 	}
 	
@@ -125,6 +143,14 @@ public class GameService {
 		
 		game.addPlayer(newPlayer);
 		GameStorage.getInstance().setGame(game);
+
+		Optional<AppUser> appUserSearch = appUserRepository.findByUsername(game.getPlayers()[game.getPlayerIndexByUsername(newPlayer.getUsername())].getUsername());
+		AppUser appUser = appUserSearch.get();
+
+		appUser.setAmountBetThisRound(0);
+		appUser.setCurrentHand(null);
+		appUser.setFolded(false);
+		appUserRepository.save(appUser);
 		
 		return game;
 	}
@@ -136,90 +162,150 @@ public class GameService {
 		}
 		
         Game game = GameStorage.getInstance().getGames().get(gamePlay.getGameId());
-		System.out.println("\nGameStorage.getInstance().getGames(): '" + GameStorage.getInstance().getGames() + "'");
-        
-        System.out.format("gamePlay.getPlayer().getUsername(): %s\n\n", gamePlay.getPlayer().getUsername());
-    	System.out.format("game.getCurrentTurn().getUsername(): %s\n\n", game.getCurrentTurn().getUsername());
-    	System.out.format("game.getCurrentTurnIndex(): %s\n\n", game.getCurrentTurnIndex());
-    	System.out.format("game.getPlayers()[game.getCurrentTurnIndex()]: %s\n\n", game.getPlayers()[game.getCurrentTurnIndex()]);
+//		System.out.println("\nGameStorage.getInstance().getGames(): '" + GameStorage.getInstance().getGames() + "'");
+//		
+//		System.out.format("gamePlay.getPlayer().getUsername(): %s\n\n", gamePlay.getPlayer().getUsername());
+//		System.out.format("game.getCurrentTurn().getUsername(): %s\n\n", game.getCurrentTurn().getUsername());
+//		System.out.format("game.getCurrentTurnIndex(): %s\n\n", game.getCurrentTurnIndex());
+//		System.out.format("game.getPlayers()[game.getCurrentTurnIndex()]: %s\n\n", game.getPlayers()[game.getCurrentTurnIndex()]);
+
+    	// Get appUser from player username.
+		Optional<AppUser> appUserSearch = appUserRepository.findByUsername(gamePlay.getPlayer().getUsername());
+		AppUser appUser = appUserSearch.get();
+		System.out.format("\nappUser: %s\n\n", appUser);
 		
+		// Check if the user has already folded.
+    	if (appUser.getFolded()) {
+    		throw new InvalidGameException("You have already folded.");
+    	}
+    	
+    	// Check if game has started.
 		if (game.getGameStatus().equals(NEW)) {
         	System.out.println("\nThe game hasn't started yet.");
         	throw new InvalidGameException("The game hasn't started yet.");
  
-        } 
+        }
 		
+		// Check if game is finished.
         if (game.getGameStatus().equals(FINISHED)) {
         	System.out.println("Game is already finished.");
             throw new InvalidGameException("Game is already finished.");
         }
         
+        // Check if it is this player's turn.
         if (!game.getCurrentTurn().getUsername().equals(gamePlay.getPlayer().getUsername())) {
         	System.out.println("\nIt's not your turn yet.");
         	throw new InvalidGameException("It's not your turn yet.");
         }
 
+        // Check the move type and proceed accordingly.
         if (gamePlay.getMove().equals(CHECK)) {
-        	// TODO: Check checkAmount, if non-zero perform bet logic.
-        	;
+        	// If diff between game and player's check amount and subtract from player's balance.
+        	Integer checkAmountDifference = game.getCheckAmount() - appUser.getAmountBetThisRound();
+        	if (checkAmountDifference != 0) {
+        		game.addToPot(checkAmountDifference);
+        		appUser.addToAmountBetThisRound(checkAmountDifference);
+        		// TODO: Subtract from player's balance.
+        	}
         } else if (gamePlay.getMove().equals(BET)) {
-        	game.addToPot(gamePlay.getBetAmount());
+        	// TODO: Subtract from player's balance.
+        	Integer betAmountDifference = game.getCheckAmount() - appUser.getAmountBetThisRound();
+        	
+    		game.addToPot(betAmountDifference+gamePlay.getBetAmount());
+    		appUser.addToAmountBetThisRound(betAmountDifference+gamePlay.getBetAmount());
         	game.addToCheckAmount(gamePlay.getBetAmount());
         	// TODO: Subtract from player's balance.
+//        	game.addToPot(gamePlay.getBetAmount());
+//        	appUser.addToAmountBetThisRound(gamePlay.getBetAmount());
         } else if (gamePlay.getMove().equals(FOLD)) {
-        	;
+        	// Set folded to true and save to appUserRepository.
+    		appUser.setFolded(true);
         }
+        
+        // Save changes to appUser.
+		appUserRepository.save(appUser);
 
-//        int[][] board = game.getBoard();
-//        board[gamePlay.getCoordinateX()][gamePlay.getCoordinateY()] = gamePlay.getType().getValue();
-//
-//        Boolean xWinner = checkWinner(game.getBoard(), TicTacToe.X);
-//        Boolean oWinner = checkWinner(game.getBoard(), TicTacToe.O);
-//
-//        if (xWinner) {
-//            game.setWinner(game.getPlayers()[0]);
-//            game.setGameStatus(FINISHED);
-//        } else if (oWinner) {
-//            game.setWinner(game.getPlayers()[1]);
-//            game.setGameStatus(FINISHED);
-//        }
-//
-//        if (gamePlay.getType().equals(TicTacToe.X)) {
-//        	game.setCurrentTurn(game.getPlayers()[1]);
-//        } else if (gamePlay.getType().equals(TicTacToe.O)) {
-//        	game.setCurrentTurn(game.getPlayers()[0]);
-//        }
+    	Boolean checkAmountMetByAllActivePlayers = true;
     	
-
-        // If it is the last player in the lobbies' turn, reset the current turn to the first player in the lobby.
-        if (game.getCurrentTurnIndex()+1 == game.getCurrentPlayerCount()) {
+    	// Check that all players have met the checkAmount.
+    	for (int i = 0; i < game.getCurrentPlayerCount(); i++) {
+    		appUserSearch = appUserRepository.findByUsername(game.getPlayers()[i].getUsername());
+    		AppUser tempAppUser = appUserSearch.get();
+    		
+    		// If the user hasn't folded and they haven't met the check amount, set them as the next player.
+    		if ((!tempAppUser.getFolded()) && (game.getCheckAmount() != tempAppUser.getAmountBetThisRound())) {
+    			System.out.println("User: '" + tempAppUser.getUsername() + "' has not met the checkAmount.");
+    			System.out.format("game.getPlayers()[game.getPlayerIndexByUsername(tempAppUser.getUsername())]: '%s'\n\n", game.getPlayers()[game.getPlayerIndexByUsername(tempAppUser.getUsername())]);
+    			System.out.format("tempAppUser.getUsername(): '%s'\n", tempAppUser.getUsername());
+    			System.out.format("game.getPlayerIndexByUsername(tempAppUser.getUsername()): '%s'\n", game.getPlayerIndexByUsername(tempAppUser.getUsername()));
+    			game.setCurrentTurn(game.getPlayers()[game.getPlayerIndexByUsername(tempAppUser.getUsername())]);
+    			checkAmountMetByAllActivePlayers = false;
+    		}
+    	}
+    	
+        // If it is the last player in the lobbies' and checkAmount is met by all active players, reset the current turn to the first player in the lobby.
+        if ((game.getCurrentTurnIndex()+1 == game.getCurrentPlayerCount()) || ((game.getCheckAmount() != 0))) {
+        	System.out.println("Last player in lobbies' turn.\n");
+        	System.out.format("game.getCurrentTurn(): '%s'\n", game.getCurrentTurn());
+			System.out.format("game.getCurrentTurnIndex()+1: '%d'\n", game.getCurrentTurnIndex()+1);
+			System.out.format("game.getCurrentPlayerCount(): '%s'\n", game.getCurrentPlayerCount());
         	
-        	game.setCurrentTurn(game.getPlayers()[0]);
-        	game.setCheckAmount(0);
         	
-        	// Advance to the next round and TODO: Draw cards appropriate to current round.
-        	if (game.getCurrentRound().equals(START)) {
-            	game.setCurrentRound(FLOP);
-            	String[] tempBoard = {getRandomCard(), getRandomCard(), getRandomCard(), null, null};
-            	game.setBoard(tempBoard);
-            } else if (game.getCurrentRound().equals(FLOP)) {
-            	game.setCurrentRound(TURN);
-            	String[] tempBoard = {game.getBoard()[0], game.getBoard()[1], game.getBoard()[2], getRandomCard(), null};
-            	game.setBoard(tempBoard);
-            } else if (game.getCurrentRound().equals(TURN)) {
-//            	game.setCurrentRound(RIVER);
-            	String[] tempBoard = {game.getBoard()[0], game.getBoard()[1], game.getBoard()[2], game.getBoard()[3], getRandomCard()};
-            	game.setCurrentTurn(null);
-            	game.setGameStatus(FINISHED);
-            	game.setBoard(tempBoard);
-            } else if (game.getCurrentRound().equals(RIVER)) {
-            	game.setCurrentTurn(null);
-            	game.setGameStatus(FINISHED);
-            	// TODO: Evaluate winner.
-            	// TODO: Clear currentHands.
-            }
+        	
+        	// If checkAmount has been met by all players who aren't folded, proceed to next round.
+        	if (checkAmountMetByAllActivePlayers) {
+	        	game.setCurrentTurn(game.getPlayers()[0]);
+	        	game.setCheckAmount(0);
+	        	
+	        	// Reset amountBetThisRound for all active players.
+        		for (int i = 0; i < game.getPlayers().length; i++) {
+        			if (game.getPlayers()[i] == null) {
+        				break;
+        			}
+        			appUserSearch = appUserRepository.findByUsername(game.getPlayers()[i].getUsername());
+        			AppUser tempAppUser = appUserSearch.get();
+        			tempAppUser.setAmountBetThisRound(0);
+        			appUserRepository.save(tempAppUser);
+        		}
+	        	
+	        	// Advance to the next round and draw cards appropriate to current round.
+	        	if (game.getCurrentRound().equals(START)) {
+	            	game.setCurrentRound(FLOP);
+	            	String[] tempBoard = {getRandomCard(), getRandomCard(), getRandomCard(), null, null};
+	            	game.setBoard(tempBoard);
+	            } else if (game.getCurrentRound().equals(FLOP)) {
+	            	game.setCurrentRound(TURN);
+	            	String[] tempBoard = {game.getBoard()[0], game.getBoard()[1], game.getBoard()[2], getRandomCard(), null};
+	            	game.setBoard(tempBoard);
+	            } else if (game.getCurrentRound().equals(TURN)) {
+	//            	game.setCurrentRound(RIVER);
+	            	String[] tempBoard = {game.getBoard()[0], game.getBoard()[1], game.getBoard()[2], game.getBoard()[3], getRandomCard()};
+	            	game.setCurrentTurn(null);
+	            	game.setGameStatus(FINISHED);
+	            	game.setBoard(tempBoard);
+	            	// TODO: Evaluate winner.
+	            	
+	            	// Reset appUser temp variables (currentHands?, folded, amountBetThisRound).
+	        		for (int i = 0; i < game.getPlayers().length; i++) {
+	        			if (game.getPlayers()[i] == null) {
+	        				break;
+	        			}
+	        			
+	        			appUserSearch = appUserRepository.findByUsername(game.getPlayers()[i].getUsername());
+	        			AppUser tempAppUser = appUserSearch.get();
+	        			tempAppUser.setAmountBetThisRound(0);
+//	        			tempAppUser.setCurrentHand(null);
+	        			tempAppUser.setFolded(false);
+	        			appUserRepository.save(tempAppUser);
+	        		}
+	            } else if (game.getCurrentRound().equals(RIVER)) {
+	            	game.setCurrentTurn(null);
+	            	game.setGameStatus(FINISHED);
+	            }
+        	}
         // Otherwise, set the current turn to the next player in the lobby
         } else {
+			System.out.format("game.getPlayers()[game.getCurrentTurnIndex()+1]: %s\n\n", game.getPlayers()[game.getCurrentTurnIndex()+1]);
         	game.setCurrentTurn(game.getPlayers()[game.getCurrentTurnIndex()+1]);
         }
         
@@ -252,5 +338,44 @@ public class GameService {
         }
 	        
         return false;
+	}
+	
+	private Integer getNonFoldedPlayerCount(Game game) {
+		Optional<AppUser> appUserSearch;
+		Integer nonFoldedPlayerCount = 0;
+		
+		for (int i = 0; i < game.getPlayers().length; i++) {
+			if (game.getPlayers()[i] == null) {
+				break;
+			}
+			
+			appUserSearch = appUserRepository.findByUsername(game.getPlayers()[i].getUsername());
+			AppUser appUser = appUserSearch.get();
+			
+			if (!appUser.getFolded()) {
+				nonFoldedPlayerCount++;
+			}
+		}
+		
+		return nonFoldedPlayerCount;
+	}
+	
+	private Integer getFirstNonFoldedPlayerIndex(Game game) {
+		Optional<AppUser> appUserSearch;
+		int i;
+		for (i = 0; i < game.getPlayers().length; i++) {
+			if (game.getPlayers()[i] == null) {
+				return null;
+			}
+			
+			appUserSearch = appUserRepository.findByUsername(game.getPlayers()[i].getUsername());
+			AppUser appUser = appUserSearch.get();
+			
+			if (!appUser.getFolded()) {
+				break;
+			}
+		}
+		
+		return i;
 	}
 }

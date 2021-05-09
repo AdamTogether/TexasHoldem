@@ -45,6 +45,8 @@ public class AppUser implements UserDetails {
 	private String email;
 	private String password;
 	private Integer balance;
+	private Integer amountBetThisRound;
+	private Boolean folded;
 	private String[] currentHand;
 	@Enumerated(EnumType.STRING)
 	private AppUserRole appUserRole;
@@ -65,6 +67,8 @@ public class AppUser implements UserDetails {
 		this.appUserRole = appUserRole;
 		this.balance = 1000;
 		this.currentHand = null;
+		this.amountBetThisRound = 0;
+		this.folded = false;
 	}
 	
 	@Override
@@ -81,22 +85,6 @@ public class AppUser implements UserDetails {
 	@Override
 	public String getUsername() {
 		return username;
-	}
-
-	public String getEmail() {
-		return email;
-	}
-	
-	public Integer getBalance() {
-		return balance;
-	}
-	
-	public String[] getCurrentHand() {
-		return this.currentHand;
-	}
-	
-	public void setCurrentHand(String[] cards) {
-		this.currentHand = cards;
 	}
 
 	@Override
@@ -119,4 +107,23 @@ public class AppUser implements UserDetails {
 		return enabled;
 	}
 
+	public String getEmail() {
+		return email;
+	}
+	
+	public Integer getBalance() {
+		return balance;
+	}
+	
+	public String[] getCurrentHand() {
+		return this.currentHand;
+	}
+	
+	public void setCurrentHand(String[] cards) {
+		this.currentHand = cards;
+	}
+
+	public void addToAmountBetThisRound(Integer amount) {
+		this.amountBetThisRound += amount;
+	}
 }

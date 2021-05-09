@@ -1,5 +1,8 @@
 package com.algorandex.model;
 
+import java.util.Optional;
+
+import com.algorandex.appuser.AppUser;
 import com.algorandex.appuser.AppUserRepository;
 
 import lombok.Data;
@@ -131,5 +134,20 @@ public class Game {
 			}
 		}
 		return i+1;
+	}
+	
+	public Integer getPlayerIndexByUsername(String username) {
+		int i;
+		for (i = 0; i < this.players.length; i++) {
+			if (players[i] == null) {
+				break;
+			}
+//			System.out.format("players[i].getUsername(): %s\n", players[i].getUsername());
+//			System.out.format("username: %s\n\n", username);
+			if (players[i].getUsername().equals(username)) {
+				break;
+			}
+		}
+		return i;
 	}
 }
