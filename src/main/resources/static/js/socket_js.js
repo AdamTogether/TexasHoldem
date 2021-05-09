@@ -31,6 +31,7 @@ function connectToSocket(gameId) {
             let data = JSON.parse(response.body);
             console.log(data);
             displayResponse(data);
+            populateLobbyList(data);
         })
     });
 }
@@ -84,12 +85,13 @@ function connectToRandom() {
         dataType: "json",
         contentType: "application/json",
         success: function (data) {
-            waitingForPlayer = false;
+            alert("You've joined a game hosted by player '" + data.players[0].username + "'.");
+            waitingForPlayer = true;
             GAME_ID = data.gameId;
             reset();
+            populateLobbyList(data);
             connectToSocket(data.gameId);
             gameOn = true;
-            alert("You've joined a game hosted by player '" + data.players[0].username + "'.");
         },
         error: function (error) {
             alert("Couldn't find any games, try creating your own!");
@@ -114,15 +116,51 @@ function connectToSpecificGame() {
             "gameId": GAME_ID
         }),
         success: function (data) {
-            waitingForPlayer = false;
+            alert("You've joined a game hosted by player '" + data.players[0].username + "'.");
+            waitingForPlayer = true;
             gameId = data.gameId;
             reset();
+            populateLobbyList(data);
             connectToSocket(data.gameId);
             gameOn = true;
-            alert("You've joined a game with player '" + data.players[0].username + "'");
         },
         error: function (error) {
             console.log(error);
         }
     })
+}
+
+function populateLobbyList(data) {    
+    let currentLobbyString = "<p>Current lobby:</p>";
+    let i = 0;
+    for (i = 0; i < data.players.length; i++) {
+        currentLobbyString += "<p>" + data.players[i].username;
+        for (let j = 0; j < data.foldedPlayers.length; j++) {
+            if (data.foldedPlayers[j] == null) {
+                break;
+            } else if (data.players[i].username == data.foldedPlayers[j].username) {
+                currentLobbyString += " (FOLDED)";
+            }
+        }
+        currentLobbyString += "</p>";
+        if (data.players[i+1] == null) {
+            break;
+        }
+    }
+    document.getElementById("currentLobby").innerHTML = currentLobbyString;
+}
+
+function reset() {
+    // turns = [["#", "#", "#"], ["#", "#", "#"], ["#", "#", "#"]];
+    $(".tic").text("#");
+    $("#pot").text("");
+    $("#checkAmount").text("");
+    document.getElementById("startGame").classList.remove("hidden");
+    document.getElementById("currentTurn").innerHTML = "";
+    document.getElementById("curGameId").innerHTML = "Game ID: '" + GAME_ID + "'";
+    document.getElementById("currentLobby").innerHTML = "";
+    document.getElementById("winner").innerHTML = "";
+    for (let i = 0; i < 2; i++) {
+        $("#hand_" + i.toString()).text("");
+    }
 }

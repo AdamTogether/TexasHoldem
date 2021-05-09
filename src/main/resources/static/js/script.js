@@ -45,19 +45,39 @@ function displayResponse(data) {
     getMyCurrentHand();
 
     if (data.gameStatus == "IN_PROGRESS") {
+        waitingForPlayer = false;
         $("#pot").text("Pot: $" + data.pot);
         document.getElementById("startGame").classList.add("hidden");
+        document.getElementById("gameInterface").classList.remove("hidden");
         if (data.currentTurn.username != null) {
             document.getElementById("currentTurn").innerHTML = "Current turn: '" + data.currentTurn.username + "'";
         }
     } else if (data.gameStatus == "NEW") {
         document.getElementById("startGame").classList.remove("hidden");
+        document.getElementById("gameInterface").classList.add("add");
+        let currentLobbyString = "<p>Currently lobby:</p>";
+        let i = 0;
+        for (i = 0; i < data.players.length; i++) {
+            currentLobbyString += "<p>" + data.players[i].username + "</p>";
+            if (data.players[i+1] == null) {
+                break;
+            }
+        }
+        document.getElementById("currentLobby").innerHTML = currentLobbyString;
     }
 
     if (waitingForPlayer) {
-        document.getElementById("oponentUsername").innerHTML = "Currently playing with player '" + data.players[1].username + "'";
-        alert("Player '" + data.players[1].username + "' has joined the game.");
-        waitingForPlayer = false;
+        // let currentLobbyString = "<p>Currently lobby:</p>";
+        // let i = 0;
+        for (i = 0; i < data.players.length; i++) {
+        //     currentLobbyString += "<p>" + data.players[i].username + "</p>";
+            if (data.players[i+1] == null) {
+                break;
+            }
+        }
+        // document.getElementById("currentLobby").innerHTML = currentLobbyString;
+        alert("Player '" + data.players[i].username + "' has joined the game.");
+        populateLobbyList(data);
     }
 
     for (let i = 0; i < board.length; i++) {
@@ -75,24 +95,30 @@ function displayResponse(data) {
     //         $("#" + id).text(turns[i][j]);
     //     }
     // }
-    // if (data.winner != null) {
-    //     document.getElementById("winner").innerHTML = data.winner + " won!";
-    //     alert("Winner is " + data.winner);
-    //     gameOn = false;
-    // } else {
+    if (data.winner != null) {
+        // document.getElementById("winner").innerHTML = data.winner.username + " won!";
+        $("#winner").text(data.winner.username + " wins!");
+        $("#currentTurn").text("");
+        alert("Winner is " + data.winner.username);
+        // gameOn = false;
+    }
+    // else {
     //     gameOn = true;
     // }
 }
 
-function reset() {
-    // turns = [["#", "#", "#"], ["#", "#", "#"], ["#", "#", "#"]];
-    $(".tic").text("#");
-    document.getElementById("startGame").classList.remove("hidden");
-    document.getElementById("currentTurn").innerHTML = "";
-    document.getElementById("curGameId").innerHTML = "Game ID: '" + GAME_ID + "'";
-    document.getElementById("oponentUsername").innerHTML = "";
-    document.getElementById("winner").innerHTML = "";
-}
+// function reset() {
+//     // turns = [["#", "#", "#"], ["#", "#", "#"], ["#", "#", "#"]];
+//     $(".tic").text("#");
+//     document.getElementById("startGame").classList.remove("hidden");
+//     document.getElementById("currentTurn").innerHTML = "";
+//     document.getElementById("curGameId").innerHTML = "Game ID: '" + GAME_ID + "'";
+//     document.getElementById("currentLobby").innerHTML = "";
+//     document.getElementById("winner").innerHTML = "";
+//     for (let i = 0; i < currentHand.length; i++) {
+//         $("#hand_" + i.toString()).text("");
+//     }
+// }
 
 // function playerTurn(turn, id) {
 //     if (gameOn) {

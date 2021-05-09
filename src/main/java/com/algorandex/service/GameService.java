@@ -40,6 +40,9 @@ public class GameService {
 		Player[] players = new Player[8];
 		players[0] = player;
 		game.setPlayers(players);
+		
+		Player[] foldedPlayers = new Player[8];
+		game.setFoldedPlayers(foldedPlayers);
         game.setCurrentTurn(player);
 
 		GameStorage.getInstance().setGame(game);
@@ -73,10 +76,14 @@ public class GameService {
         if (game.getGameStatus().equals(FINISHED)) {
             throw new InvalidGameException("Game is already finished");
         }
-        
+
+		Player[] foldedPlayers = new Player[8];
+		game.setFoldedPlayers(foldedPlayers);
+		
         game.setGameStatus(IN_PROGRESS);
         game.setCurrentRound(START);
         game.setCurrentTurn(game.getPlayers()[0]);
+    	game.setFirstTimeThroughRound(true);
 //        if (game.getPlayers()[2] != null) {
 //        	game.setGameStatus(IN_PROGRESS);
 //        } else {
@@ -215,15 +222,29 @@ public class GameService {
     		appUser.addToAmountBetThisRound(betAmountDifference+gamePlay.getBetAmount());
         	game.addToCheckAmount(gamePlay.getBetAmount());
         	// TODO: Subtract from player's balance.
-//        	game.addToPot(gamePlay.getBetAmount());
-//        	appUser.addToAmountBetThisRound(gamePlay.getBetAmount());
         } else if (gamePlay.getMove().equals(FOLD)) {
         	// Set folded to true and save to appUserRepository.
     		appUser.setFolded(true);
+    		game.addFoldedPlayer(game.getPlayers()[game.getPlayerIndexByUsername(appUser.getUsername())]);
         }
         
         // Save changes to appUser.
 		appUserRepository.save(appUser);
+		
+		// Check if there is only one non-folded player remaining, if so they win.
+		if (this.getNonFoldedPlayerCount(game) == 1) {
+        	String[] tempBoard = {game.getBoard()[0], game.getBoard()[1], game.getBoard()[2], game.getBoard()[3], game.getBoard()[4]};
+        	for (int i = 0; i < tempBoard.length; i++) {
+        		if (tempBoard[i] == null) {
+        			tempBoard[i] = getRandomCard();
+        		}
+        	}
+        	game.setBoard(tempBoard);
+        	game.setCurrentTurn(null);
+        	game.setGameStatus(FINISHED);
+        	game.setWinner(game.getPlayers()[this.getFirstNonFoldedPlayerIndex(game)]);
+        	// TODO: Add pot to winner's appUser balance.
+		}
 
     	Boolean checkAmountMetByAllActivePlayers = true;
     	
@@ -238,24 +259,40 @@ public class GameService {
     			System.out.format("game.getPlayers()[game.getPlayerIndexByUsername(tempAppUser.getUsername())]: '%s'\n\n", game.getPlayers()[game.getPlayerIndexByUsername(tempAppUser.getUsername())]);
     			System.out.format("tempAppUser.getUsername(): '%s'\n", tempAppUser.getUsername());
     			System.out.format("game.getPlayerIndexByUsername(tempAppUser.getUsername()): '%s'\n", game.getPlayerIndexByUsername(tempAppUser.getUsername()));
-    			game.setCurrentTurn(game.getPlayers()[game.getPlayerIndexByUsername(tempAppUser.getUsername())]);
+    			if (!game.getFirstTimeThroughRound()) {
+    				game.setCurrentTurn(game.getPlayers()[game.getPlayerIndexByUsername(tempAppUser.getUsername())]);
+    			} else if (game.getCurrentTurnIndex()+1 == game.getCurrentPlayerCount()) {
+    				game.setCurrentTurn(game.getPlayers()[game.getPlayerIndexByUsername(tempAppUser.getUsername())]);
+    				game.setFirstTimeThroughRound(false);
+    			}
     			checkAmountMetByAllActivePlayers = false;
+    			break;
     		}
     	}
     	
         // If it is the last player in the lobbies' and checkAmount is met by all active players, reset the current turn to the first player in the lobby.
-        if ((game.getCurrentTurnIndex()+1 == game.getCurrentPlayerCount()) || ((game.getCheckAmount() != 0))) {
+        if (!game.getFirstTimeThroughRound() || (game.getCurrentTurnIndex()+1 == game.getCurrentPlayerCount())) {
+        	game.setFirstTimeThroughRound(false);
         	System.out.println("Last player in lobbies' turn.\n");
         	System.out.format("game.getCurrentTurn(): '%s'\n", game.getCurrentTurn());
 			System.out.format("game.getCurrentTurnIndex()+1: '%d'\n", game.getCurrentTurnIndex()+1);
 			System.out.format("game.getCurrentPlayerCount(): '%s'\n", game.getCurrentPlayerCount());
         	
-        	
-        	
         	// If checkAmount has been met by all players who aren't folded, proceed to next round.
         	if (checkAmountMetByAllActivePlayers) {
-	        	game.setCurrentTurn(game.getPlayers()[0]);
+            	for (int i = 0; i < game.getCurrentPlayerCount(); i++) {
+        			appUserSearch = appUserRepository.findByUsername(game.getPlayers()[i].getUsername());
+        			AppUser tempAppUser = appUserSearch.get();
+        			
+        			// Assign currentTurn to the first non-folded player found.
+            		if (!tempAppUser.getFolded()) {
+            			System.out.format("game.getPlayers()[%d]: %s\n\n", i, game.getPlayers()[i]);
+                    	game.setCurrentTurn(game.getPlayers()[i]);
+                    	break;
+            		}
+            	}
 	        	game.setCheckAmount(0);
+	        	game.setFirstTimeThroughRound(true);
 	        	
 	        	// Reset amountBetThisRound for all active players.
         		for (int i = 0; i < game.getPlayers().length; i++) {
@@ -278,7 +315,6 @@ public class GameService {
 	            	String[] tempBoard = {game.getBoard()[0], game.getBoard()[1], game.getBoard()[2], getRandomCard(), null};
 	            	game.setBoard(tempBoard);
 	            } else if (game.getCurrentRound().equals(TURN)) {
-	//            	game.setCurrentRound(RIVER);
 	            	String[] tempBoard = {game.getBoard()[0], game.getBoard()[1], game.getBoard()[2], game.getBoard()[3], getRandomCard()};
 	            	game.setCurrentTurn(null);
 	            	game.setGameStatus(FINISHED);
@@ -305,8 +341,18 @@ public class GameService {
         	}
         // Otherwise, set the current turn to the next player in the lobby
         } else {
-			System.out.format("game.getPlayers()[game.getCurrentTurnIndex()+1]: %s\n\n", game.getPlayers()[game.getCurrentTurnIndex()+1]);
-        	game.setCurrentTurn(game.getPlayers()[game.getCurrentTurnIndex()+1]);
+        	// Iterate through remaining players in the lobby and check if they have folded.
+        	for (int i = game.getCurrentTurnIndex()+1; i < game.getCurrentPlayerCount(); i++) {
+    			appUserSearch = appUserRepository.findByUsername(game.getPlayers()[i].getUsername());
+    			AppUser tempAppUser = appUserSearch.get();
+    			
+    			// Assign currentTurn to the first non-folded player found.
+        		if (!tempAppUser.getFolded()) {
+        			System.out.format("game.getPlayers()[%d]: %s\n\n", i, game.getPlayers()[i]);
+                	game.setCurrentTurn(game.getPlayers()[i]);
+                	break;
+        		}
+        	}
         }
         
         GameStorage.getInstance().setGame(game);

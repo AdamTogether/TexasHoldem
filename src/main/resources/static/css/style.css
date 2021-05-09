@@ -3,7 +3,7 @@ body {
     color: #666;
 }
 
-h1, h2, h3, #curGameId, #oponentUsername, #pot {
+h1, h2, h3, #curGameId, #currentLobby, #pot, p {
     text-align: center;
     color: #fff !important;
 }

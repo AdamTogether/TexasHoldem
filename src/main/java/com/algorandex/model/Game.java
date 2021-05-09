@@ -12,12 +12,14 @@ public class Game {
 	
 	private String gameId;
 	private Player[] players;
+	private Player[] foldedPlayers;
 	private GameStatus gameStatus;
 	private GameRoundType currentRound;
 	private String[] board;
 	private Integer pot = 0;
 	private Integer checkAmount = 0;
 	private Integer lastStartingPlayerIndex;
+	private Boolean firstTimeThroughRound;
 	private Player bigBlind;
 	private Player littleBlind;
 	private Player currentTurn;
@@ -34,8 +36,21 @@ public class Game {
 
 	public void addPlayer(Player player) {
 		for (int i = 0; i < this.players.length; i++) {
-			if (players[i] == null) {
+			if (this.players[i] == null) {
 				this.players[i] = player;
+				break;
+			}
+		}
+	}
+	
+	public void setFoldedPlayers(Player[] foldedPlayers) {
+		this.foldedPlayers = foldedPlayers;
+	}
+
+	public void addFoldedPlayer(Player foldedPlayer) {
+		for (int i = 0; i < this.foldedPlayers.length; i++) {
+			if (this.foldedPlayers[i] == null) {
+				this.foldedPlayers[i] = foldedPlayer;
 				break;
 			}
 		}
@@ -77,6 +92,10 @@ public class Game {
 
 	public void setWinner(Player winner) {
 		this.winner = winner;
+	}
+	
+	public void setFirstTimeThroughRound(Boolean firstTimeThroughRound) {
+		this.firstTimeThroughRound = firstTimeThroughRound;
 	}
 	
 	// GETTER FUNCTIONS
@@ -124,6 +143,10 @@ public class Game {
 	
 	public Player getWinner() {
 		return this.winner;
+	}
+	
+	public Boolean getFirstTimeThroughRound() {
+		return this.firstTimeThroughRound;
 	}
 	
 	public Integer getCurrentPlayerCount() {
