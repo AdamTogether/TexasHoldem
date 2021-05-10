@@ -15,6 +15,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.algorandex.model.HoldemWinType;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -46,6 +48,8 @@ public class AppUser implements UserDetails {
 	private String password;
 	private Integer balance;
 	private Integer amountBetThisRound;
+	private HoldemWinType holdemWinType;
+	private String holdemWinString;
 	private Boolean folded;
 	private String[] currentHand;
 	@Enumerated(EnumType.STRING)
@@ -69,6 +73,8 @@ public class AppUser implements UserDetails {
 		this.currentHand = null;
 		this.amountBetThisRound = 0;
 		this.folded = false;
+		this.holdemWinType = null;
+		this.holdemWinString = null;
 	}
 	
 	@Override
@@ -119,11 +125,41 @@ public class AppUser implements UserDetails {
 		return this.currentHand;
 	}
 	
+	public HoldemWinType getHoldemWinType() {
+		return this.holdemWinType;
+	}
+	
+	public String getHoldemWinString() {
+		return this.holdemWinString;
+	}
+	
 	public void setCurrentHand(String[] cards) {
 		this.currentHand = cards;
 	}
 
 	public void addToAmountBetThisRound(Integer amount) {
 		this.amountBetThisRound += amount;
+	}
+	
+	public Boolean setHoldemWinType(HoldemWinType holdemWinType) { 
+		if (this.holdemWinType != null) {
+			// Replace appUser's winType if the winType being passed is of higher rank. 
+			if (holdemWinType == null) {
+				this.holdemWinType = holdemWinType;
+				return true;
+			} else if (holdemWinType.getValue() < this.holdemWinType.getValue()) {
+				this.holdemWinType = holdemWinType;
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			this.holdemWinType = holdemWinType;
+			return true;
+		}
+	}
+	
+	public void setHoldemWinString(String holdemWinString) {
+		this.holdemWinString = holdemWinString;
 	}
 }

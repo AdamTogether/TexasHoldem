@@ -4,7 +4,7 @@ let GAME_ID;
 let playerType;
 
 function getMyCurrentHand() {
-        $.ajax({
+    $.ajax({
         url: url + "/game/myHand",
         type: 'GET',
         dataType: "json",
@@ -18,7 +18,26 @@ function getMyCurrentHand() {
         error: function (error) {
             console.log(error);
         }
-    })
+    });
+}
+
+function getAmountNeededToMeetCheck() {
+    $.ajax({
+        url: url + "/game/amountNeededToMeetCheck",
+        type: 'POST',
+        dataType: "json",
+        contentType: "application/json",
+        data: JSON.stringify({
+            "gameId": GAME_ID
+        }),
+        success: function (amountNeededToMeetCheck) {
+            console.log("amountNeededToMeetCheck: " + amountNeededToMeetCheck);
+            $("#check").text("Check ($" + amountNeededToMeetCheck.toString() + ")");
+        },
+        error: function (error) {
+            console.log(error);
+        }
+    });
 }
 
 function connectToSocket(gameId) {
@@ -72,7 +91,7 @@ function startGame() {
             console.log(data);
         },
         error: function (error) {
-            alert("Couldn't start match.");
+            alert("Couldn't start match, waiting for more players.");
             console.log(error);
         }
     });
@@ -118,7 +137,7 @@ function connectToSpecificGame() {
         success: function (data) {
             alert("You've joined a game hosted by player '" + data.players[0].username + "'.");
             waitingForPlayer = true;
-            gameId = data.gameId;
+            GAME_ID = data.gameId;
             reset();
             populateLobbyList(data);
             connectToSocket(data.gameId);
@@ -156,8 +175,9 @@ function reset() {
     $("#pot").text("");
     $("#checkAmount").text("");
     document.getElementById("startGame").classList.remove("hidden");
+    document.getElementById("gameInterface").classList.add("hidden");
     document.getElementById("currentTurn").innerHTML = "";
-    document.getElementById("curGameId").innerHTML = "Game ID: '" + GAME_ID + "'";
+    document.getElementById("curGameId").innerHTML = "Game ID: " + GAME_ID + "";
     document.getElementById("currentLobby").innerHTML = "";
     document.getElementById("winner").innerHTML = "";
     for (let i = 0; i < 2; i++) {

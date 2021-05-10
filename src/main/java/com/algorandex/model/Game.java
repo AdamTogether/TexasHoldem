@@ -14,6 +14,7 @@ public class Game {
 	private Player[] players;
 	private Player[] foldedPlayers;
 	private GameStatus gameStatus;
+	private Boolean resetLobby = false;
 	private GameRoundType currentRound;
 	private String[] board;
 	private Integer pot = 0;
@@ -23,7 +24,7 @@ public class Game {
 	private Player bigBlind;
 	private Player littleBlind;
 	private Player currentTurn;
-	private Player winner;
+	private Player[] winners = new Player[8];
 	
 	// SETTER FUNCTIONS
 	public void setGameId(String gameId) {
@@ -67,6 +68,12 @@ public class Game {
 	public void setBoard(String[] board) {
 		this.board = board;
 	}
+	
+	public void resetBoard() {
+		for (int i = 0; i < this.board.length; i++) {
+			this.board[i] = null;
+		}
+	}
 
 	public void setPot(Integer pot) {
 		this.pot = pot;
@@ -90,8 +97,23 @@ public class Game {
 		this.currentTurn = currentTurn;
 	}
 
-	public void setWinner(Player winner) {
-		this.winner = winner;
+	public void setWinners(Player[] winners) {
+		this.winners = winners;
+	}
+
+	public void resetWinners() {
+		for (int i = 0; i < this.winners.length; i++) {
+			this.winners[i] = null;
+		}
+	}
+
+	public void addWinner(Player winner) {
+		for (int i = 0; i < this.winners.length; i++) {
+			if (this.winners[i] == null) {
+				this.winners[i] = winner;
+				break;
+			}
+		}
 	}
 	
 	public void setFirstTimeThroughRound(Boolean firstTimeThroughRound) {
@@ -141,8 +163,8 @@ public class Game {
 		return i;
 	}
 	
-	public Player getWinner() {
-		return this.winner;
+	public Player[] getWinners() {
+		return this.winners;
 	}
 	
 	public Boolean getFirstTimeThroughRound() {
@@ -163,14 +185,23 @@ public class Game {
 		int i;
 		for (i = 0; i < this.players.length; i++) {
 			if (players[i] == null) {
+				i = -1;
 				break;
 			}
-//			System.out.format("players[i].getUsername(): %s\n", players[i].getUsername());
-//			System.out.format("username: %s\n\n", username);
 			if (players[i].getUsername().equals(username)) {
 				break;
 			}
 		}
 		return i;
+	}
+	
+	public Integer getWinnerCount() {
+		int i = 0;
+		for (i = 0; i < this.winners.length; i++) {
+			if (this.winners[i+1] == null) {
+				break;
+			}
+		}
+		return i+1;
 	}
 }

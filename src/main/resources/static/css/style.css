@@ -81,7 +81,7 @@ h1, h2, h3, #curGameId, #currentLobby, #pot, p {
     width: 30%;
 }
 
-#gameBoard li:hover, button:hover, #reset:hover, #check:hover, #fold:hover, #bet:hover, #connectByGameId:hover, #startGame:hover {
+#gameBoard li:hover, #myHand li:hover, button:hover, #reset:hover, #check:hover, #fold:hover, #bet:hover, #connectByGameId:hover, #startGame:hover {
     cursor: pointer;
     background: #222;
 }
