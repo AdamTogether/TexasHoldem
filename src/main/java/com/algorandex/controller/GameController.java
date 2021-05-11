@@ -66,7 +66,7 @@ public class GameController {
 	}
 	
 	@PostMapping("/amountNeededToMeetCheck")
-	public ResponseEntity<Integer> getAmountNeededToMeetCheck(@RequestBody ConnectRequest request) {
+	public ResponseEntity<Double> getAmountNeededToMeetCheck(@RequestBody ConnectRequest request) {
 		System.out.println("Running getAmountNeededToMeetCheck()...");
 		System.out.format("request: '%s'\n\n", request);
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -74,7 +74,7 @@ public class GameController {
 		Optional<AppUser> appUserSearch = appUserRepository.findByUsername((String) auth.getName());
 		AppUser appUser = appUserSearch.get();
 		
-		Integer amountNeededToMeetCheck = gameService.getCheckAmountByGameID(request.getGameId()) - appUser.getAmountBetThisRound();
+		Double amountNeededToMeetCheck = gameService.getCheckAmountByGameID(request.getGameId()) - appUser.getAmountBetThisRound();
 		
 		return ResponseEntity.ok(amountNeededToMeetCheck);
 	}

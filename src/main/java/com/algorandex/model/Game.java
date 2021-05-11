@@ -17,8 +17,8 @@ public class Game {
 	private Boolean resetLobby = false;
 	private GameRoundType currentRound;
 	private String[] board;
-	private Integer pot = 0;
-	private Integer checkAmount = 0;
+	private Double pot = 0.0;
+	private Double checkAmount = 0.0;
 	private Integer lastStartingPlayerIndex;
 	private Boolean firstTimeThroughRound;
 	private Player bigBlind;
@@ -75,20 +75,20 @@ public class Game {
 		}
 	}
 
-	public void setPot(Integer pot) {
+	public void setPot(Double pot) {
 		this.pot = pot;
 	}
 	
-	public void addToPot(Integer pot) {
+	public void addToPot(Double pot) {
 		this.pot += pot;
 	}
 
 
-	public void setCheckAmount(Integer checkAmount) {
+	public void setCheckAmount(Double checkAmount) {
 		this.checkAmount = checkAmount;
 	}
 	
-	public void addToCheckAmount(Integer checkAmount) {
+	public void addToCheckAmount(Double checkAmount) {
 		this.checkAmount += checkAmount;
 	}
 	
@@ -141,11 +141,11 @@ public class Game {
 		return this.board;
 	}
 	
-	public Integer getPot() {
+	public Double getPot() {
 		return this.pot;
 	}
 	
-	public Integer getCheckAmount() {
+	public Double getCheckAmount() {
 		return this.checkAmount;
 	}
 	

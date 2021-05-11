@@ -46,8 +46,8 @@ public class AppUser implements UserDetails {
 	private String username;
 	private String email;
 	private String password;
-	private Integer balance;
-	private Integer amountBetThisRound;
+	private Double balance;
+	private Double amountBetThisRound;
 	private HoldemWinType holdemWinType;
 	private String holdemWinString;
 	private Boolean folded;
@@ -69,9 +69,9 @@ public class AppUser implements UserDetails {
 		this.email = email;
 		this.password = password;
 		this.appUserRole = appUserRole;
-		this.balance = 1000;
+		this.balance = 1000.0;
 		this.currentHand = null;
-		this.amountBetThisRound = 0;
+		this.amountBetThisRound = 0.0;
 		this.folded = false;
 		this.holdemWinType = null;
 		this.holdemWinString = null;
@@ -117,8 +117,8 @@ public class AppUser implements UserDetails {
 		return email;
 	}
 	
-	public Integer getBalance() {
-		return balance;
+	public Double getBalance() {
+		return this.balance;
 	}
 	
 	public String[] getCurrentHand() {
@@ -137,8 +137,16 @@ public class AppUser implements UserDetails {
 		this.currentHand = cards;
 	}
 
-	public void addToAmountBetThisRound(Integer amount) {
+	public void addToAmountBetThisRound(Double amount) {
 		this.amountBetThisRound += amount;
+	}
+	
+	public void addToBalance(Double amount) {
+		this.balance += amount;
+	}
+	
+	public void subtractFromBalance(Double amount) {
+		this.balance -= amount;
 	}
 	
 	public Boolean setHoldemWinType(HoldemWinType holdemWinType) { 

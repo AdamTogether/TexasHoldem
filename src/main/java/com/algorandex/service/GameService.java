@@ -52,7 +52,7 @@ public class GameService {
 		Optional<AppUser> appUserSearch = appUserRepository.findByUsername(game.getPlayers()[game.getPlayerIndexByUsername(player.getUsername())].getUsername());
 		AppUser appUser = appUserSearch.get();
 
-		appUser.setAmountBetThisRound(0);
+		appUser.setAmountBetThisRound(0.0);
 		appUser.setCurrentHand(null);
 		appUser.setFolded(false);
 		appUser.setHoldemWinString(null);
@@ -83,7 +83,7 @@ public class GameService {
 			game.resetBoard();
 			game.resetWinners();
 			game.setResetLobby(true);
-			game.setPot(0);
+			game.setPot(0.0);
 		}
 
 		if (game.getPlayers()[1] != null) {
@@ -108,7 +108,7 @@ public class GameService {
 				String[] testHand = new String[2];
 				testHand[0] = getRandomCard();
 				testHand[1] = getRandomCard();
-				appUser.setAmountBetThisRound(0);
+				appUser.setAmountBetThisRound(0.0);
 				appUser.setCurrentHand(testHand);
 				appUser.setFolded(false);
 				appUser.setHoldemWinString(null);
@@ -146,7 +146,7 @@ public class GameService {
 		Optional<AppUser> appUserSearch = appUserRepository.findByUsername(game.getPlayers()[game.getPlayerIndexByUsername(newPlayer.getUsername())].getUsername());
 		AppUser appUser = appUserSearch.get();
 
-		appUser.setAmountBetThisRound(0);
+		appUser.setAmountBetThisRound(0.0);
 		appUser.setCurrentHand(null);
 		appUser.setFolded(false);
 		appUser.setHoldemWinString(null);
@@ -175,7 +175,7 @@ public class GameService {
 		Optional<AppUser> appUserSearch = appUserRepository.findByUsername(game.getPlayers()[game.getPlayerIndexByUsername(newPlayer.getUsername())].getUsername());
 		AppUser appUser = appUserSearch.get();
 
-		appUser.setAmountBetThisRound(0);
+		appUser.setAmountBetThisRound(0.0);
 		appUser.setCurrentHand(null);
 		appUser.setFolded(false);
 		appUser.setHoldemWinString(null);
@@ -230,20 +230,27 @@ public class GameService {
 		// Check the move type and proceed accordingly.
 		if (gamePlay.getMove().equals(CHECK)) {
 			// If diff between game and player's check amount and subtract from player's balance.
-			Integer checkAmountDifference = game.getCheckAmount() - appUser.getAmountBetThisRound();
+			Double checkAmountDifference = game.getCheckAmount() - appUser.getAmountBetThisRound();
 			if (checkAmountDifference != 0) {
 				game.addToPot(checkAmountDifference);
 				appUser.addToAmountBetThisRound(checkAmountDifference);
 				// TODO: Subtract from player's balance.
+//				appUserSearch = appUserRepository.findByUsername(gamePlay.getPlayer().getUsername());
+//				AppUser tempAppUser = appUserSearch.get();
+				appUser.subtractFromBalance(checkAmountDifference);
+//				appUserRepository.save(tempAppUser);
 			}
 		} else if (gamePlay.getMove().equals(BET)) {
-			// TODO: Subtract from player's balance.
-			Integer betAmountDifference = game.getCheckAmount() - appUser.getAmountBetThisRound();
+			Double betAmountDifference = game.getCheckAmount() - appUser.getAmountBetThisRound();
 			
 			game.addToPot(betAmountDifference+gamePlay.getBetAmount());
 			appUser.addToAmountBetThisRound(betAmountDifference+gamePlay.getBetAmount());
-			game.addToCheckAmount(gamePlay.getBetAmount());
+			game.addToCheckAmount(Double.valueOf(gamePlay.getBetAmount()));
 			// TODO: Subtract from player's balance.
+//			appUserSearch = appUserRepository.findByUsername(appUser.getUsername());
+//			AppUser tempAppUser = appUserSearch.get();
+			appUser.subtractFromBalance(betAmountDifference+gamePlay.getBetAmount());
+//			appUserRepository.save(tempAppUser);
 		} else if (gamePlay.getMove().equals(FOLD)) {
 			// Set folded to true and save to appUserRepository.
 			appUser.setFolded(true);
@@ -268,6 +275,10 @@ public class GameService {
 			winners[0] = game.getPlayers()[this.getFirstNonFoldedPlayerIndex(game)];
 			game.setWinners(winners);
 			// TODO: Add pot to winner's appUser balance.
+			appUserSearch = appUserRepository.findByUsername(winners[0].getUsername());
+			AppUser tempAppUser = appUserSearch.get();
+			tempAppUser.addToBalance(game.getPot()/game.getWinnerCount());
+			appUserRepository.save(tempAppUser);
 		}
 
 		Boolean checkAmountMetByAllActivePlayers = true;
@@ -278,7 +289,7 @@ public class GameService {
 			AppUser tempAppUser = appUserSearch.get();
 			
 			// If the user hasn't folded and they haven't met the check amount, set them as the next player.
-			if ((!tempAppUser.getFolded()) && (game.getCheckAmount() != tempAppUser.getAmountBetThisRound())) {
+			if ((!tempAppUser.getFolded()) && (!game.getCheckAmount().equals(tempAppUser.getAmountBetThisRound()))) {
 				System.out.println("User: '" + tempAppUser.getUsername() + "' has not met the checkAmount.");
 				System.out.format("game.getPlayers()[game.getPlayerIndexByUsername(tempAppUser.getUsername())]: '%s'\n\n", game.getPlayers()[game.getPlayerIndexByUsername(tempAppUser.getUsername())]);
 				System.out.format("tempAppUser.getUsername(): '%s'\n", tempAppUser.getUsername());
@@ -317,7 +328,7 @@ public class GameService {
 						break;
 					}
 				}
-				game.setCheckAmount(0);
+				game.setCheckAmount(0.0);
 				game.setFirstTimeThroughRound(true);
 				
 				// Reset amountBetThisRound for all active players.
@@ -327,7 +338,7 @@ public class GameService {
 					}
 					appUserSearch = appUserRepository.findByUsername(game.getPlayers()[i].getUsername());
 					AppUser tempAppUser = appUserSearch.get();
-					tempAppUser.setAmountBetThisRound(0);
+					tempAppUser.setAmountBetThisRound(0.0);
 					appUserRepository.save(tempAppUser);
 				}
 				
@@ -348,6 +359,16 @@ public class GameService {
 					
 					// TODO: Evaluate winner and add pot to balance(s).
 					checkWinners(game);
+					for (int i = 0; i < game.getWinners().length; i++) {
+						if (game.getWinners()[i] == null) {
+							break;
+						} else {
+							appUserSearch = appUserRepository.findByUsername(game.getWinners()[i].getUsername());
+							AppUser tempAppUser = appUserSearch.get();
+							tempAppUser.addToBalance(game.getPot()/game.getWinnerCount());
+							appUserRepository.save(tempAppUser);
+						}
+					}
 					
 					// Reset appUser temp variables (folded, amountBetThisRound).
 					for (int i = 0; i < game.getPlayers().length; i++) {
@@ -357,7 +378,7 @@ public class GameService {
 						
 						appUserSearch = appUserRepository.findByUsername(game.getPlayers()[i].getUsername());
 						AppUser tempAppUser = appUserSearch.get();
-						tempAppUser.setAmountBetThisRound(0);
+						tempAppUser.setAmountBetThisRound(0.0);
 						tempAppUser.setFolded(false);
 						appUserRepository.save(tempAppUser);
 					}
@@ -413,7 +434,6 @@ public class GameService {
 
 	private Player[] checkWinners(Game game) {
 		System.out.println("Running checkWinners()...");
-		Player[] winners = new Player[8];
 
 		Optional<AppUser> appUserSearch;
 		
@@ -430,9 +450,9 @@ public class GameService {
 				int[] userValues = new int[14];
 
 				for (int j = 0; j < cardsToCheck.length; j++) {
-					System.out.format("cardsToCheck[%d]: { suite: '%s' (index: '%d'), value: '%s' (index: '%d') }\n", j,
-							cardsToCheck[j].split("_")[0], getSuiteIndexByString(cardsToCheck[j].split("_")[0]),
-							cardsToCheck[j].split("_")[1], getValueIndexByString(cardsToCheck[j].split("_")[1]));
+					System.out.format(	"cardsToCheck[%d]: { suite: '%s' (index: '%d'), value: '%s' (index: '%d') }\n", j,
+										cardsToCheck[j].split("_")[0], getSuiteIndexByString(cardsToCheck[j].split("_")[0]),
+										cardsToCheck[j].split("_")[1], getValueIndexByString(cardsToCheck[j].split("_")[1]));
 					userSuites[getSuiteIndexByString(cardsToCheck[j].split("_")[0])]++;
 					userValues[getValueIndexByString(cardsToCheck[j].split("_")[1])]++;
 					if (j == cardsToCheck.length-1) {
@@ -540,9 +560,66 @@ public class GameService {
 					}
 				}
 				
-				// TODO: Check for straight flush.
-				// TODO: Check for royal flush.
+
+				int[] flushValues = new int[14];
+				
+				// Iterate through userSuites and find the flush suite.
+				for (int x = 0; x < userSuites.length; x++) {
+					System.out.format("%s: '%d'\n", this.suites[x], userSuites[x]);
+
+					// Check for flush.
+					if (userSuites[x] >= 5) {
+						System.out.println("FLUSH");
+
+						for (int j = 0; j < cardsToCheck.length; j++) {
+							if (getSuiteIndexByString(cardsToCheck[j].split("_")[0]) == x) {
+								System.out.format(	"cardsToCheck[%d]: { suite: '%s' (index: '%d'), value: '%s' (index: '%d') }\n", j,
+													cardsToCheck[j].split("_")[0], getSuiteIndexByString(cardsToCheck[j].split("_")[0]),
+													cardsToCheck[j].split("_")[1], getValueIndexByString(cardsToCheck[j].split("_")[1]));
+								flushValues[getValueIndexByString(cardsToCheck[j].split("_")[1])]++;
+								if (j == cardsToCheck.length-1) {
+									System.out.println();
+								}
+							}
+						}
+						
+						straightTracker = 0;
+						for (int j = 0; j < flushValues.length; j++) {
+							// Check for high card.
+							if ((straightTracker == 5) && flushValues[j] == 0) {
+								// If high card isn't an ace, then it's a straight flush.
+								if (highCardIndex != 13) {
+									System.out.println("STRAIGHT_FLUSH");
+									if (appUser.setHoldemWinType(STRAIGHT_FLUSH)) {
+										appUser.setHoldemWinString(String.format("straightFlush_%s", this.values[highCardIndex]));
+									}
+								// Otherwise, the high card is an ace, so it's a royal flush
+								} else {
+									System.out.println("ROYAL_FLUSH");
+									if (appUser.setHoldemWinType(ROYAL_FLUSH)) {
+										appUser.setHoldemWinString(String.format("royalFlush_%s", this.values[highCardIndex]));
+									}
+								}
+								break;
+							} else if (flushValues[j] > 0) {
+								highCardIndex = j;
+								straightTracker += 1;
+							} else {
+								straightTracker = 0;
+							}
+						}
+						// If no straight, then it's just a flush on the high card.
+						if (straightTracker != 5 ) {
+							System.out.println("FLUSH");
+							if (appUser.setHoldemWinType(FLUSH)) {
+								appUser.setHoldemWinString(String.format("flush_%s", this.values[highCardIndex]));
+							}
+						}
+						
+					}
+				}
 			}
+			
 			// Save user state.
 			appUserRepository.save(appUser);
 		}
@@ -558,7 +635,6 @@ public class GameService {
 				System.out.println("Checking HoldemWinType for User: '" + appUser.getUsername() + "'");
 				System.out.format("appUser.getHoldemWinType(): '%s'\n", appUser.getHoldemWinType());
 				System.out.format("appUser.getHoldemWinString(): '%s'\n", appUser.getHoldemWinString());
-//				if (bestWinType != null) {System.out.format("bestWinType.getValue(): '%d'\n", bestWinType.getValue());} else {System.out.println("bestWinType.getValue(): 'null'");}
 				System.out.format("appUser.getHoldemWinType().getValue(): '%d'\n", appUser.getHoldemWinType().getValue());
 				if ((bestWinType == null) || (bestWinType.getValue() > appUser.getHoldemWinType().getValue())) {
 					// Replace winners.
@@ -589,22 +665,26 @@ public class GameService {
 			appUserSearch = appUserRepository.findByUsername(game.getWinners()[0].getUsername());
 			AppUser appUser = appUserSearch.get();
 			
-			// Resolve tie breakers for High Card, Pair, Three of a Kind, Straight, Four of a Kind and Five of a Kind.
+			// Resolve tie breakers for High Card, Pair, Three of a Kind, Straight, Flush, Four of a Kind, Straight Flush, Royal Flush, and Five of a Kind.
 			if (	(appUser.getHoldemWinType() == HIGH_CARD) 
 				||	(appUser.getHoldemWinType() == PAIR)
 				||	(appUser.getHoldemWinType() == THREE_OF_A_KIND)
 				||	(appUser.getHoldemWinType() == STRAIGHT)
+				||  (appUser.getHoldemWinType() == ROYAL_FLUSH)
 				||	(appUser.getHoldemWinType() == FOUR_OF_A_KIND)
+				||  (appUser.getHoldemWinType() == STRAIGHT_FLUSH)
+				||  (appUser.getHoldemWinType() == ROYAL_FLUSH)
 				||	(appUser.getHoldemWinType() == FIVE_OF_A_KIND)) {
 				tempWinners = this.getSingleHighCardTieBreaker(game.getWinners());
-			// Two Pair tie breaker. Full House tie breaker.
+			// Resolve tie breakers for Two Pair and Full House.
 			} else if ((appUser.getHoldemWinType() == TWO_PAIR) || (appUser.getHoldemWinType() == FULL_HOUSE)) {
 				tempWinners = this.getDoubleHighCardTieBreaker(game.getWinners());
 			}
 
-			// TODO: Flush tie breaker.
-			// TODO: Straight Flush tie breaker.
-			// TODO: Royal Flush tie breaker.
+			for (int i = 0; i < tempWinners.length; i++) {
+				System.out.format("tempWinners[%d]: '%s'", i, tempWinners[i]);
+			}
+			
 			game.setWinners(tempWinners);
 		}
 		
@@ -667,42 +747,40 @@ public class GameService {
 			}
 		}
 		
-		// Assign tempWinners to winners and reset tempWinners.
-		winners = tempWinners;
-		tempWinners = this.resetTempWinners(tempWinners);
-		
+
+		Player[] tempWinnersFinal = new Player[8];
 		
 		// If tie was resolved by dominant high card, return the winner array.
-		if (winners[1] == null) {
-			return winners;
+		if (tempWinners[1] == null) {
+			return tempWinners;
 		// Otherwise, check secondary high card.
 		} else {
 			bestHighCardIndex = -1;
 			
 			// Iterate through all the winners and get player(s) with best high cards.
-			for (int i = 0; i < winners.length; i++) {
-				if (winners[i] == null) {
+			for (int i = 0; i < tempWinners.length; i++) {
+				if (tempWinners[i] == null) {
 					break;
 				}
-				Optional<AppUser> appUserSearch = appUserRepository.findByUsername(winners[i].getUsername());
+				Optional<AppUser> appUserSearch = appUserRepository.findByUsername(tempWinners[i].getUsername());
 				AppUser appUser = appUserSearch.get();
 						
-				System.out.println("winners[" + Integer.toString(i) + "].getUsername(): '" + winners[i].getUsername() + "'");
+				System.out.println("tempWinners[" + Integer.toString(i) + "].getUsername(): '" + tempWinners[i].getUsername() + "'");
 				System.out.println("appUser.getHoldemWinType(): '" + appUser.getHoldemWinType() + "'");
 				System.out.println("appUser.getHoldemWinString(): '" + appUser.getHoldemWinString() + "'\n");
 				
 				// Check if high card is better than best high card.
 				if (this.getValueIndexByString(appUser.getHoldemWinString().split("-")[0].split("_")[1]) > bestHighCardIndex) {
-					tempWinners = this.resetTempWinners(tempWinners);
-					tempWinners = this.addToTempWinners(tempWinners, winners[i]);
+					tempWinnersFinal = this.resetTempWinners(tempWinnersFinal);
+					tempWinnersFinal = this.addToTempWinners(tempWinnersFinal, tempWinners[i]);
 					bestHighCardIndex = this.getValueIndexByString(appUser.getHoldemWinString().split("-")[0].split("_")[1]);
 				} else if (this.getValueIndexByString(appUser.getHoldemWinString().split("-")[0].split("_")[1]) == bestHighCardIndex) {
-					tempWinners = this.addToTempWinners(tempWinners, winners[i]);
+					tempWinnersFinal = this.addToTempWinners(tempWinnersFinal, tempWinners[i]);
 				}
 			}
 		}
 		
-		return tempWinners;
+		return tempWinnersFinal;
 	}
 ////if ((appUser.getHoldemWinType() == TWO_PAIR) || (appUser.getHoldemWinType() == FULL_HOUSE)) {
 ////// Check if high card is better than best high card.
@@ -793,7 +871,7 @@ public class GameService {
 		return i;
 	}
 	
-	public Integer getCheckAmountByGameID(String gameId) {
+	public Double getCheckAmountByGameID(String gameId) {
 		System.out.println("Running getCheckAmountByGameID()...");
 		System.out.format("gameId: '%s'\n\n", gameId);
 		Game game = GameStorage.getInstance().getGames().get(gameId);
