@@ -8,6 +8,7 @@
 	* Spring Web
 	* Spring Security
 	* Spring Data JPA
+	* Thymeleaf
 * PostgreSQL
 	* PostgreSQL Driver
 * Lombok

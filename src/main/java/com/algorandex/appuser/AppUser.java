@@ -15,6 +15,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.algorandex.model.HoldemWinType;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -42,8 +44,14 @@ public class AppUser implements UserDetails {
 	private String firstName;
 	private String lastName;
 	private String username;
-	private String password;
 	private String email;
+	private String password;
+	private Double balance;
+	private Double amountBetThisRound;
+	private HoldemWinType holdemWinType;
+	private String holdemWinString;
+	private Boolean folded;
+	private String[] currentHand;
 	@Enumerated(EnumType.STRING)
 	private AppUserRole appUserRole;
 	private Boolean locked = false;
@@ -61,6 +69,12 @@ public class AppUser implements UserDetails {
 		this.email = email;
 		this.password = password;
 		this.appUserRole = appUserRole;
+		this.balance = 1000.0;
+		this.currentHand = null;
+		this.amountBetThisRound = 0.0;
+		this.folded = false;
+		this.holdemWinType = null;
+		this.holdemWinString = null;
 	}
 	
 	@Override
@@ -77,10 +91,6 @@ public class AppUser implements UserDetails {
 	@Override
 	public String getUsername() {
 		return username;
-	}
-	
-	public String getEmail() {
-		return email;
 	}
 
 	@Override
@@ -103,4 +113,61 @@ public class AppUser implements UserDetails {
 		return enabled;
 	}
 
+	public String getEmail() {
+		return email;
+	}
+	
+	public Double getBalance() {
+		return this.balance;
+	}
+	
+	public String[] getCurrentHand() {
+		return this.currentHand;
+	}
+	
+	public HoldemWinType getHoldemWinType() {
+		return this.holdemWinType;
+	}
+	
+	public String getHoldemWinString() {
+		return this.holdemWinString;
+	}
+	
+	public void setCurrentHand(String[] cards) {
+		this.currentHand = cards;
+	}
+
+	public void addToAmountBetThisRound(Double amount) {
+		this.amountBetThisRound += amount;
+	}
+	
+	public void addToBalance(Double amount) {
+		this.balance += amount;
+	}
+	
+	public void subtractFromBalance(Double amount) {
+		this.balance -= amount;
+	}
+	
+	public Boolean setHoldemWinType(HoldemWinType holdemWinType) { 
+		if (this.holdemWinType != null) {
+			// Replace appUser's winType if the winType being passed is of higher rank. 
+			if (holdemWinType == null) {
+				this.holdemWinType = holdemWinType;
+				return true;
+			} else if (holdemWinType.getValue() < this.holdemWinType.getValue()) {
+				this.holdemWinType = holdemWinType;
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			this.holdemWinType = holdemWinType;
+			return true;
+		}
+	}
+	
+	public void setHoldemWinString(String holdemWinString) {
+		this.holdemWinString = holdemWinString;
+	}
 }

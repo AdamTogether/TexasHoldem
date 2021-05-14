@@ -4,9 +4,13 @@ import lombok.Data;
 
 @Data
 public class Player {
-	
 	private String username;
-//	private String email;
-//	private String password;
-//	private String balance;
+	
+	public Player(String username) {
+		this.username = username;
+	}
+	
+	public String getUsername() {
+		return this.username;
+	}
 }

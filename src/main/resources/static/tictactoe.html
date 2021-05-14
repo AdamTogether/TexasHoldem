@@ -19,29 +19,52 @@
 <div id="logout"><a href="/logout">Logout</a></div>
 <div class="text-center" id="box">
     <header>
-        <h1>Play Tic Tac Toe</h1>
+        <h1>Play Texas Holdem</h1>
         <p id="curGameId"></p>
     </header>
-    <input id="username" placeholder="Place a Username here">
-    <button onclick="createGame()">Create a new game</button>
-    <button onclick="connectToRandom()">Connect to random game</button>
+    <!-- <input id="username" placeholder="Place a Username here"> -->
+    <button class="normalButton" onclick="createGame()">Create a new game</button>
+    </br>
+    <button class="normalButton" onclick="connectToRandom()">Connect to random game</button>
+    </br>
     <input id="gameId" placeholder="Paste game id">
-    <button onclick="connectToSpecificGame()">Connect by game id</button>
+    <button id="connectByGameId" onclick="connectToSpecificGame()">Connect by game id</button>
     <div id="message"></div>
-    <ul id="gameBoard">
-        <li class="tic" id="0_0"></li>
-        <li class="tic" id="0_1"></li>
-        <li class="tic" id="0_2"></li>
-        <li class="tic" id="1_0"></li>
-        <li class="tic" id="1_1"></li>
-        <li class="tic" id="1_2"></li>
-        <li class="tic" id="2_0"></li>
-        <li class="tic" id="2_1"></li>
-        <li class="tic" id="2_2"></li>
-    </ul>
-    <div class="clearfix"></div>
-    <h2 id="winner"></h2>
-    <h4 id="oponentUsername"></h4>
+    </br>
+    </br>
+    <button class="normalButton hidden" id="startGame" onclick="startGame()">Start Game</button>
+    <span class="hidden" id="gameInterface">
+        <h2 id="winner"></h2>
+        <h3 id="currentTurn"></h3>
+        <p id="checkAmount"></p>
+        <p id="pot"></p>
+        <h2>Game Board</h2>
+        <ul id="gameBoard">
+            <li class="boardCard" id="board_0"></li>
+            <li class="boardCard" id="board_1"></li>
+            <li class="boardCard" id="board_2"></li>
+            <li class="boardCard" id="board_3"></li>
+            <li class="boardCard" id="board_4"></li>
+        </ul>
+        </br>
+        <div class="clearfix"></div>
+        <h2>My Hand</h2>
+        <ul id="myHand">
+            <li class="myCard" id="hand_0"></li>
+            <li class="myCard" id="hand_1"></li>
+        </ul>
+        <div class="clearfix"></div>
+        <span id="moves">
+            <button class="move" id="check" onclick="check()">Check</button>
+            </br>
+            <input id="betAmount" placeholder="Bet amount">
+            <button class="move" id="bet" onclick="bet()">Bet</button>
+            </br>
+            <button class="move" id="fold" onclick="fold()">Fold</button>
+        </span>
+    </span>
+    </br>
+    <h4 id="currentLobby"></h4>
 </div>
 <footer></footer>
 <script src="js/script.js"></script>
