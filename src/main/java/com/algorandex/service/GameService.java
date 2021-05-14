@@ -274,7 +274,7 @@ public class GameService {
 			Player[] winners = new Player[8];
 			winners[0] = game.getPlayers()[this.getFirstNonFoldedPlayerIndex(game)];
 			game.setWinners(winners);
-			// TODO: Add pot to winner's appUser balance.
+			// Add pot to winner's appUser balance.
 			appUserSearch = appUserRepository.findByUsername(winners[0].getUsername());
 			AppUser tempAppUser = appUserSearch.get();
 			tempAppUser.addToBalance(game.getPot()/game.getWinnerCount());
@@ -357,7 +357,7 @@ public class GameService {
 					game.setGameStatus(FINISHED);
 					game.setBoard(tempBoard);
 					
-					// TODO: Evaluate winner and add pot to balance(s).
+					// Evaluate winner and add pot to balance(s).
 					checkWinners(game);
 					for (int i = 0; i < game.getWinners().length; i++) {
 						if (game.getWinners()[i] == null) {
