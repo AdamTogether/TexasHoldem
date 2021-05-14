@@ -38,8 +38,8 @@ public class GameController {
 	private final AppUserRepository appUserRepository;
 	
 
-	@GetMapping(path = "/whoami")
-	public String getDetails() {
+	@GetMapping(path = "/myAccount")
+	public String getMyAccount() {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		
 		Optional<AppUser> appUserSearch = appUserRepository.findByUsername((String) auth.getName());
@@ -51,6 +51,42 @@ public class GameController {
 								"</br>Email: " + appUser.getEmail() +
 //								"</br>Current Hand: [" + appUser.getCurrentHand()[0] + ", " + appUser.getCurrentHand()[1] + "]" +
 								"</br>Balance: $" + appUser.getBalance();
+		
+		return appUserDetails;
+	}
+	
+	@GetMapping(path = "/myBalance")
+	public String getMyBalance() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		
+		Optional<AppUser> appUserSearch = appUserRepository.findByUsername((String) auth.getName());
+		AppUser appUser = appUserSearch.get();
+		
+		String formattedBalance = String.format("$%.2f", appUser.getBalance());
+		
+		return formattedBalance;
+	}
+	
+	@GetMapping(path = "/resetBalance")
+	public String resetBalance() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		
+		Optional<AppUser> appUserSearch = appUserRepository.findByUsername((String) auth.getName());
+		AppUser appUser = appUserSearch.get();
+		appUser.setBalance(1000.0);
+		appUserRepository.save(appUser);
+		
+		String formattedBalance = String.format("New balance: '$%.2f'", appUser.getBalance());
+		
+		return formattedBalance;
+	}
+
+	@GetMapping(path = "/whoami")
+	public String getMyUsername() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		
+		Optional<AppUser> appUserSearch = appUserRepository.findByUsername((String) auth.getName());
+		AppUser appUser = appUserSearch.get();
 		
 		return appUser.getUsername();
 	}
@@ -67,8 +103,6 @@ public class GameController {
 	
 	@PostMapping("/amountNeededToMeetCheck")
 	public ResponseEntity<Double> getAmountNeededToMeetCheck(@RequestBody ConnectRequest request) {
-		System.out.println("Running getAmountNeededToMeetCheck()...");
-		System.out.format("request: '%s'\n\n", request);
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		
 		Optional<AppUser> appUserSearch = appUserRepository.findByUsername((String) auth.getName());
@@ -131,6 +165,24 @@ public class GameController {
 		log.info("connect random: {}", player);
 		Game game = gameService.connectToRandomGame(player);
 		simpMessagingTemplate.convertAndSend("/topic/game-progress/" + game.getGameId(), game);
+		return ResponseEntity.ok(game);
+	}
+	
+	@PostMapping("/disconnect")
+	public ResponseEntity<Game> disconnect(@RequestBody ConnectRequest request) throws InvalidParamException, InvalidGameException {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		
+		Optional<AppUser> appUserSearch = appUserRepository.findByUsername((String) auth.getName());
+		AppUser appUser = appUserSearch.get();
+		Player player = new Player(appUser.getUsername());
+		
+		log.info("disconnect request: {}", request);
+		Game game = gameService.disconnectFromGame(player, request.getGameId());
+		
+		if (game != null) {
+			simpMessagingTemplate.convertAndSend("/topic/game-progress/" + game.getGameId(), game);
+		}
+		
 		return ResponseEntity.ok(game);
 	}
 	

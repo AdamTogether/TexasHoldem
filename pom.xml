@@ -65,10 +65,26 @@
 	</dependencies>
 
 
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 	
 	<profiles>
 		<profile>
-			<id>demo</id>
+			<id>local</id>
 	        <activation>
 	            <activeByDefault>true</activeByDefault>
 	        </activation>
@@ -79,24 +95,26 @@
 			            <filtering>true</filtering>
 			        </resource>
 			    </resources>
-				<plugins>
-					<plugin>
-						<groupId>org.springframework.boot</groupId>
-						<artifactId>spring-boot-maven-plugin</artifactId>
-						<configuration>
-							<excludes>
-								<exclude>
-									<groupId>org.projectlombok</groupId>
-									<artifactId>lombok</artifactId>
-								</exclude>
-							</excludes>
-						</configuration>
-					</plugin>
-				</plugins>
 			</build>
 			<properties>
 				<spring.profiles.active>
-				demo
+				local
+				</spring.profiles.active>
+			</properties>
+		</profile>
+		<profile>
+			<id>test</id>
+			<build>
+			    <resources>
+			        <resource>
+			            <directory>src/main/resources</directory>
+			            <filtering>true</filtering>
+			        </resource>
+			    </resources>
+			</build>
+			<properties>
+				<spring.profiles.active>
+				test
 				</spring.profiles.active>
 			</properties>
 		</profile>

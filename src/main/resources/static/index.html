@@ -1,6 +1,83 @@
-<html>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
+          name="viewport">
+    <meta content="ie=edge" http-equiv="X-UA-Compatible">
+    <title>Document</title>
+    <link crossorigin="anonymous" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" rel="stylesheet">
+    <link type="text/css" href="css/style.css" rel="stylesheet">
+    <!--    libs for stomp and sockjs-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <!--    end libs for stomp and sockjs-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+</head>
 <body>
-<a href="/tictactoe.html"><h1>Play Texas Holdem</h1></a>
-<a href="/logout"><h1>Logout</h1></a>
+<div id="logout"><a href="/logout">Logout</a></div>
+<div id="myAccount"><a href="/game/myAccount">My Account</a></div>
+<div id="resetBalance"><a href="/game/resetBalance">Reset Balance</a></div>
+<div class="text-center" id="box">
+    <header>
+        <h1>Play Texas Holdem</h1>
+        <p id="curGameId"></p>
+    </header>
+
+    <span id="findGameInterface">
+	    <button class="normalButton" onclick="createGame()">Create a new game</button>
+	    </br>
+	    <button class="normalButton" onclick="connectToRandom()">Connect to random game</button>
+	    </br>
+	    <input id="gameId" placeholder="Paste game id">
+	    <button id="connectByGameId" onclick="connectToSpecificGame()">Connect by game id</button>
+	    <div id="message"></div>
+	    </br>
+	    </br>
+	</span>
+
+    <button class="normalButton hidden" id="leaveLobby" onclick="leaveLobby()">Leave Lobby</button>
+	</br>
+    <button class="normalButton hidden" id="startGame" onclick="startGame()">Start Game</button>
+	</br>
+    <span class="hidden" id="gameInterface_1">
+        <h2 id="winner"></h2>
+        <h3 id="currentTurn"></h3>
+    </span>
+    <h4 id="myBalance"></h4>
+    <span class="hidden" id="gameInterface_2">
+        <p id="pot"></p>
+        <h2>Game Board</h2>
+        <ul id="gameBoard">
+            <li class="boardCard"><img class="card" id="board_0" src="" alt=""></li>
+            <li class="boardCard"><img class="card" id="board_1" src="" alt=""></li>
+            <li class="boardCard"><img class="card" id="board_2" src="" alt=""></li>
+            <li class="boardCard"><img class="card" id="board_3" src="" alt=""></li>
+            <li class="boardCard"><img class="card" id="board_4" src="" alt=""></li>
+        </ul>
+        </br>
+        <div class="clearfix"></div>
+        <h2>My Hand</h2>
+        <ul id="myHand">
+            <li class="myCard"><img class="card" id="hand_0" src="" alt=""></li>
+            <li class="myCard"><img class="card" id="hand_1" src="" alt=""></li>
+        </ul>
+        <div class="clearfix"></div>
+        <span id="moves">
+            <button class="move" id="check" onclick="check()">Check</button>
+            </br>
+            <input id="betAmount" placeholder="Bet amount">
+            <button class="move" id="bet" onclick="bet()">Bet</button>
+            </br>
+            <button class="move" id="fold" onclick="fold()">Fold</button>
+        </span>
+    </span>
+    </br>
+    <h4 id="currentLobby"></h4>
+</div>
+<footer></footer>
+<script src="js/script.js"></script>
+<script src="js/socket_js.js"></script>
 </body>
 </html>

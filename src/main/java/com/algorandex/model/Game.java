@@ -11,7 +11,7 @@ import lombok.Data;
 public class Game {
 	
 	private String gameId;
-	private Player[] players;
+	private Player[] players = new Player[8];
 	private Player[] foldedPlayers;
 	private GameStatus gameStatus;
 	private Boolean resetLobby = false;
@@ -21,10 +21,12 @@ public class Game {
 	private Double checkAmount = 0.0;
 	private Integer lastStartingPlayerIndex;
 	private Boolean firstTimeThroughRound;
+	private Player justLeftLobby;
 	private Player bigBlind;
 	private Player littleBlind;
 	private Player currentTurn;
 	private Player[] winners = new Player[8];
+	private String holdemWinString;
 	
 	// SETTER FUNCTIONS
 	public void setGameId(String gameId) {
@@ -34,11 +36,26 @@ public class Game {
 	public void setPlayers(Player[] players) {
 		this.players = players;
 	}
+	
+	public void rotatePlayers() {
+		// Move first player to the last.
+		this.players[this.getCurrentPlayerCount()] = this.players[0];
+		
+		// Shift all players forward one slot and set remove the duplicate.
+		for (int i = 0; i < this.players.length; i++) {
+			this.players[i] = this.players[i+1];
+			
+			if (this.players[i] == null) {
+				break;
+			}
+		}
+	}
 
 	public void addPlayer(Player player) {
 		for (int i = 0; i < this.players.length; i++) {
 			if (this.players[i] == null) {
 				this.players[i] = player;
+				this.setJustLeftLobby(null);
 				break;
 			}
 		}
@@ -203,5 +220,22 @@ public class Game {
 			}
 		}
 		return i+1;
+	}
+
+	public void removePlayer(Player playerToRemove) {
+		Boolean playerRemoved = false;
+		
+		// Go through players, remove the player and shift all other players over to fill in the gap.
+		for (int i = 0; i < this.players.length; i++) {
+			if (this.players[i] == null) {
+				break;
+			} else if (playerRemoved) {
+				this.players[i] = this.players[i+1];
+			} else if (this.players[i].getUsername().equals(playerToRemove.getUsername())) {
+				this.setJustLeftLobby(playerToRemove);
+				this.players[i] = this.players[i+1];
+				playerRemoved = true;
+			}
+		}
 	}
 }

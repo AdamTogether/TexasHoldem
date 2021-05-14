@@ -3,12 +3,12 @@ body {
     color: #666;
 }
 
-h1, h2, h3, #curGameId, #currentLobby, #pot, p {
+h1, h2, h3, h4, #curGameId, #currentLobby, #pot, p {
     text-align: center;
     color: #fff !important;
 }
 
-#logout, #logout a {
+#logout, #logout a, #myAccount, #myAccount a, #resetBalance, #resetBalance a {
     font-size: 15px;
     text-align: right;
     color: #666 !important;
@@ -20,9 +20,9 @@ h1, h2, h3, #curGameId, #currentLobby, #pot, p {
 }
 
 #box {
-    width: 550px;
+    width: 900px;
     overflow: auto;
-    margin: 40px auto;
+    margin: auto;
     background: #666;
     padding-bottom: 40px;
     border-radius: 10px;
@@ -38,23 +38,32 @@ h1, h2, h3, #curGameId, #currentLobby, #pot, p {
     text-align: center;
 }
 
+#gameBoard {
+    padding-left: 5.5%;
+}
+
 #myHand {
-    padding-left: 33%;
+    padding-left: 32.2%;
     /*padding-right: 35%;*/
 }
 
 #gameBoard li, #myHand li {
     float: left;
-    margin: 10px;
+    margin: 15px;
     padding: auto;
-    height: 70px;
-    width: 70px;
+    height: 200px;
+    width: 130px;
     font-size: 10px;
     background: #333;
     color: #ccc;
     list-style: none;
     text-align: center;
-    border-radius: 5px;
+    border-radius: 9px;
+}
+
+.card {
+    height: 200px;
+    border-radius: 9px;
 }
 
 .normalButton, #reset, #check, #fold, #startGame {

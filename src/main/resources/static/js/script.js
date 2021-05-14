@@ -1,7 +1,7 @@
 // var turns = [["#", "#", "#"], ["#", "#", "#"], ["#", "#", "#"]];
 var turn = "";
 var gameOn = false;
-var waitingForPlayer = true;
+var WAITING_FOR_GAME_TO_START = true;
 
 function check() {
     makeAMove("CHECK", 0);
@@ -41,6 +41,14 @@ function makeAMove(move, betAmount) {
 function displayResponse(data) {
     let board = data.board;
 
+    for (let i = 0; i < board.length; i++) {
+        if (board[i] == null) {
+            document.getElementById("board_" + i.toString()).src="";
+        } else {
+            document.getElementById("board_" + i.toString()).src="/images/" + board[i] + ".jpg";
+        }
+    }
+
     if (data.resetLobby) {
         reset();
     }
@@ -48,11 +56,14 @@ function displayResponse(data) {
     console.log("board: '" + board + "'");
 
     if (data.gameStatus == "IN_PROGRESS") {
+        getMyCurrentHand();
         getAmountNeededToMeetCheck();
-        waitingForPlayer = false;
+        WAITING_FOR_GAME_TO_START = false;
         $("#pot").text("Pot: $" + data.pot);
         document.getElementById("startGame").classList.add("hidden");
-        document.getElementById("gameInterface").classList.remove("hidden");
+        document.getElementById("leaveLobby").classList.add("hidden");
+        document.getElementById("gameInterface_1").classList.remove("hidden");
+        document.getElementById("gameInterface_2").classList.remove("hidden");
         document.getElementById("moves").classList.remove("hidden");
         if (data.currentTurn.username != null) {
             document.getElementById("currentTurn").innerHTML = "Current turn: '" + data.currentTurn.username + "'";
@@ -62,104 +73,64 @@ function displayResponse(data) {
         } else {
             $("#bet").text("Bet");
         }
-    } else if (data.gameStatus == "NEW") {
-        document.getElementById("startGame").classList.remove("hidden");
-        document.getElementById("gameInterface").classList.add("hidden");
-        let currentLobbyString = "<p>Currently lobby:</p>";
-        let i = 0;
-        for (i = 0; i < data.players.length; i++) {
-            currentLobbyString += "<p>" + data.players[i].username + "</p>";
-            if (data.players[i+1] == null) {
-                break;
+    } else {
+        if (WAITING_FOR_GAME_TO_START && !data.resetLobby) {
+            if (data.justLeftLobby != null) {
+                alert("Player '" + data.justLeftLobby.username + "' has left the lobby.");
+            } else {
+                for (i = 0; i < data.players.length; i++) {
+                    if (data.players[i+1] == null) {
+                        break;
+                    }
+                }
+                alert("Player '" + data.players[i].username + "' has joined the lobby.");
             }
+            populateLobbyList(data);
         }
-        document.getElementById("currentLobby").innerHTML = currentLobbyString;
-    } else if (data.gameStatus == "FINISHED") {
-        document.getElementById("startGame").classList.remove("hidden");
-        $("#currentTurn").text("GAME OVER");
-        document.getElementById("moves").classList.add("hidden");
 
-        if (data.winners[1] == null) {
-            // document.getElementById("winner").innerHTML = data.winner.username + " won!";
-            $("#winner").text(data.winners[0].username + " wins!");
-            alert("Winner is " + data.winners[0].username);
-            // gameOn = false;
-        } else {
-            var tieString = "Tie between: " + data.winners[0].username;
-            for (let j = 1; j < data.winnerCount; j++) {
-                if (j == data.winnerCount-1) {
-                    if (j != 1) { tieString += ","}
-                    tieString += " and " + data.winners[j].username + ".";
-                } else {
-                    tieString += ", " + data.winners[j].username;
+        if (data.gameStatus == "NEW") {
+            document.getElementById("startGame").classList.remove("hidden");
+            document.getElementById("leaveLobby").classList.remove("hidden");
+            document.getElementById("gameInterface_1").classList.add("hidden");
+            document.getElementById("gameInterface_2").classList.add("hidden");
+            let currentLobbyString = "<p>Currently lobby:</p>";
+            let i = 0;
+            for (i = 0; i < data.players.length; i++) {
+                currentLobbyString += "<p>" + data.players[i].username + "</p>";
+                if (data.players[i+1] == null) {
+                    break;
                 }
             }
-            alert(tieString);
-            tieString +=  "</br>Splitting the pot between them.";
-            document.getElementById("winner").innerHTML = tieString;
-            // $("#winner").text(tieString);
-        }
-    }
+            document.getElementById("currentLobby").innerHTML = currentLobbyString;
+        } else if (data.gameStatus == "FINISHED" && !WAITING_FOR_GAME_TO_START) {
+            WAITING_FOR_GAME_TO_START = true;
+            document.getElementById("startGame").classList.remove("hidden");
+            document.getElementById("leaveLobby").classList.remove("hidden");
+            document.getElementById("moves").classList.add("hidden");
+            $("#currentTurn").text("");
 
-    getMyCurrentHand();
-
-    if (waitingForPlayer) {
-        for (i = 0; i < data.players.length; i++) {
-            if (data.players[i+1] == null) {
-                break;
+            if (data.winners[0] != null) {
+                if (data.winners[1] == null) {
+                    $("#winner").text(data.winners[0].username + " wins (" + data.holdemWinString + ")!");
+                    alert("Winner is " + data.winners[0].username);
+                } else {
+                    var tieString = "Tie between: " + data.winners[0].username;
+                    for (let j = 1; j < data.winnerCount; j++) {
+                        if (j == data.winnerCount-1) {
+                            if (j != 1) { tieString += ","}
+                            tieString += " and " + data.winners[j].username + " (" + data.holdemWinString + ").";
+                        } else {
+                            tieString += ", " + data.winners[j].username;
+                        }
+                    }
+                    alert(tieString);
+                    tieString +=  "</br>Splitting the pot between them.";
+                    document.getElementById("winner").innerHTML = tieString;
+                }
             }
         }
-        alert("Player '" + data.players[i].username + "' has joined the game.");
-        populateLobbyList(data);
     }
 
-    for (let i = 0; i < board.length; i++) {
-        $("#board_" + i.toString()).text(board[i]);
-    }
+    getMyBalance();
 
-    // for (let i = 0; i < board.length; i++) {
-    //     for (let j = 0; j < board[i].length; j++) {
-    //         if (board[i][j] === 1) {
-    //             turns[i][j] = 'X';
-    //         } else if (board[i][j] === 2) {
-    //             turns[i][j] = 'O';
-    //         }
-    //         let id = i + "_" + j;
-    //         $("#" + id).text(turns[i][j]);
-    //     }
-    // }
-    // else {
-    //     gameOn = true;
-    // }
 }
-
-// function reset() {
-//     // turns = [["#", "#", "#"], ["#", "#", "#"], ["#", "#", "#"]];
-//     $(".tic").text("#");
-//     document.getElementById("startGame").classList.remove("hidden");
-//     document.getElementById("currentTurn").innerHTML = "";
-//     document.getElementById("curGameId").innerHTML = "Game ID: '" + GAME_ID + "'";
-//     document.getElementById("currentLobby").innerHTML = "";
-//     document.getElementById("winner").innerHTML = "";
-//     for (let i = 0; i < currentHand.length; i++) {
-//         $("#hand_" + i.toString()).text("");
-//     }
-// }
-
-// function playerTurn(turn, id) {
-//     if (gameOn) {
-//         var spotTaken = $("#" + id).text();
-//         if (spotTaken === "#") {
-//             makeAMove(playerType, id.split("_")[0], id.split("_")[1]);
-//         }
-//     }
-// }
-
-// $(".tic").click(function () {
-//     var slot = $(this).attr('id');
-//     playerTurn(turn, slot);
-// });
-
-// $("#reset").click(function () {
-//     reset();
-// });

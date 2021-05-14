@@ -9,6 +9,10 @@ public class EmailValidator implements Predicate<String> {
 	@Override
 	public boolean test(String s) {
 		//!TODO Validate email.
-		return true;
+		if (s.contains("@")) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 }

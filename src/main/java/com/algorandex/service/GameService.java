@@ -31,7 +31,7 @@ public class GameService {
 	
 	private final AppUserRepository appUserRepository;
 	private final String[] suites = {"clubs", "diamonds", "hearts", "spades"};
-	private final String[] values = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"};
+	private final String[] values = {"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"};
 
 	public Game createGame(Player player) {
 		Game game = new Game();
@@ -39,13 +39,12 @@ public class GameService {
 		game.setGameId(UUID.randomUUID().toString());
 		game.setGameStatus(NEW);
 		
-		Player[] players = new Player[8];
-		players[0] = player;
-		game.setPlayers(players);
+		game.addPlayer(player);
 		
 		Player[] foldedPlayers = new Player[8];
 		game.setFoldedPlayers(foldedPlayers);
 		game.setCurrentTurn(player);
+		game.setHoldemWinString("");
 
 		GameStorage.getInstance().setGame(game);
 
@@ -79,11 +78,13 @@ public class GameService {
 
 		if (game.getGameStatus().equals(FINISHED)) {
 //			throw new InvalidGameException("Game is already finished");
-			// TODO: Reset game.
+			// Reset game.
 			game.resetBoard();
 			game.resetWinners();
 			game.setResetLobby(true);
 			game.setPot(0.0);
+			game.rotatePlayers();
+			game.setHoldemWinString("");
 		}
 
 		if (game.getPlayers()[1] != null) {
@@ -96,6 +97,7 @@ public class GameService {
 		game.setFoldedPlayers(foldedPlayers);
 		
 		game.setCurrentRound(START);
+		game.setJustLeftLobby(null);
 		game.setCurrentTurn(game.getPlayers()[0]);
 		game.setFirstTimeThroughRound(true);
 		for (int i=0; i < game.getPlayers().length; i++) {
@@ -122,22 +124,26 @@ public class GameService {
 	
 	public Game connectToGame(Player newPlayer, String gameId) throws InvalidParamException, InvalidGameException {
 		if (!GameStorage.getInstance().getGames().containsKey(gameId)) {
+			System.out.println("Game with provided ID '" + gameId + "' does not exist.");
 			throw new InvalidParamException("Game with provided ID '" + gameId + "' does not exist.");
 		}
 		
 		Game game = GameStorage.getInstance().getGames().get(gameId);
 		
 		if (game.getPlayers()[7] != null) {
+			System.out.println("Game with provided ID '" + gameId + "' is already full.");
 			throw new InvalidGameException("Game with provided ID '" + gameId + "' is already full.");
 		}
 		
-		if (!game.getGameStatus().equals(NEW) || !game.getGameStatus().equals(FINISHED)) {
+		if (!game.getGameStatus().equals(NEW) && !game.getGameStatus().equals(FINISHED)) {
+			System.out.println("Game with provided ID '" + gameId + "' has already started.");
 			throw new InvalidGameException("Game with provided ID '" + gameId + "' has already started.");
 		}
 		
 		// If player already in the lobby, throw exception.
 		if (game.getPlayerIndexByUsername(newPlayer.getUsername()) != -1) {
-			throw new InvalidGameException("You're already in this lobby");
+			System.out.println("You're already in this lobby.");
+			throw new InvalidGameException("You're already in this lobby.");
 		}
 		
 		game.addPlayer(newPlayer);
@@ -157,7 +163,7 @@ public class GameService {
 	}
 	
 	public Game connectToRandomGame(Player newPlayer) throws NotFoundException, InvalidGameException {
-		//TODO: Add logic to filter iterator to check for a full lobby.
+		// Add logic to filter iterator to check for a full lobby.
 		Game game = GameStorage.getInstance().getGames().values().stream()
 				.filter(
 						it -> (	it.getGameStatus().equals(NEW) || it.getGameStatus().equals(FINISHED)) 
@@ -181,6 +187,44 @@ public class GameService {
 		appUser.setHoldemWinString(null);
 		appUser.setHoldemWinType(null);
 		appUserRepository.save(appUser);
+		
+		return game;
+	}
+	
+
+	public Game disconnectFromGame(Player player, String gameId) throws InvalidParamException, InvalidGameException {
+		if (!GameStorage.getInstance().getGames().containsKey(gameId)) {
+			throw new InvalidParamException("Game with provided ID '" + gameId + "' does not exist.");
+		}
+		
+		Game game = GameStorage.getInstance().getGames().get(gameId);
+		
+		if (game.getGameStatus().equals(IN_PROGRESS)) {
+			throw new InvalidGameException("Game with provided ID '" + gameId + "' has already started.");
+		}
+		
+		// If player isn't in the lobby, throw exception.
+		if (game.getPlayerIndexByUsername(player.getUsername()) == -1) {
+			throw new InvalidGameException("You're not in this lobby");
+		}
+		
+		Optional<AppUser> appUserSearch = appUserRepository.findByUsername(game.getPlayers()[game.getPlayerIndexByUsername(player.getUsername())].getUsername());
+		AppUser appUser = appUserSearch.get();
+
+		appUser.setAmountBetThisRound(0.0);
+		appUser.setCurrentHand(null);
+		appUser.setFolded(false);
+		appUser.setHoldemWinString(null);
+		appUser.setHoldemWinType(null);
+		appUserRepository.save(appUser);
+		
+		game.removePlayer(player);
+		
+		GameStorage.getInstance().setGame(game);
+		
+		if (game.getPlayers()[0] == null) {
+			GameStorage.deleteGame(game);
+		}
 		
 		return game;
 	}
@@ -234,11 +278,8 @@ public class GameService {
 			if (checkAmountDifference != 0) {
 				game.addToPot(checkAmountDifference);
 				appUser.addToAmountBetThisRound(checkAmountDifference);
-				// TODO: Subtract from player's balance.
-//				appUserSearch = appUserRepository.findByUsername(gamePlay.getPlayer().getUsername());
-//				AppUser tempAppUser = appUserSearch.get();
+				// Subtract from player's balance.
 				appUser.subtractFromBalance(checkAmountDifference);
-//				appUserRepository.save(tempAppUser);
 			}
 		} else if (gamePlay.getMove().equals(BET)) {
 			Double betAmountDifference = game.getCheckAmount() - appUser.getAmountBetThisRound();
@@ -246,11 +287,8 @@ public class GameService {
 			game.addToPot(betAmountDifference+gamePlay.getBetAmount());
 			appUser.addToAmountBetThisRound(betAmountDifference+gamePlay.getBetAmount());
 			game.addToCheckAmount(Double.valueOf(gamePlay.getBetAmount()));
-			// TODO: Subtract from player's balance.
-//			appUserSearch = appUserRepository.findByUsername(appUser.getUsername());
-//			AppUser tempAppUser = appUserSearch.get();
+			// Subtract from player's balance.
 			appUser.subtractFromBalance(betAmountDifference+gamePlay.getBetAmount());
-//			appUserRepository.save(tempAppUser);
 		} else if (gamePlay.getMove().equals(FOLD)) {
 			// Set folded to true and save to appUserRepository.
 			appUser.setFolded(true);
@@ -270,6 +308,7 @@ public class GameService {
 			}
 			game.setBoard(tempBoard);
 			game.setCurrentTurn(null);
+			game.setHoldemWinString("all-others-folded");
 			game.setGameStatus(FINISHED);
 			Player[] winners = new Player[8];
 			winners[0] = game.getPlayers()[this.getFirstNonFoldedPlayerIndex(game)];
@@ -447,7 +486,7 @@ public class GameService {
 				System.out.println("Checking hand for User: '" + appUser.getUsername() + "'");
 				String[] cardsToCheck = {appUser.getCurrentHand()[0], appUser.getCurrentHand()[1], game.getBoard()[0], game.getBoard()[1], game.getBoard()[2], game.getBoard()[3], game.getBoard()[4]};
 				int[] userSuites = new int[4];
-				int[] userValues = new int[14];
+				int[] userValues = new int[13];
 
 				for (int j = 0; j < cardsToCheck.length; j++) {
 					System.out.format(	"cardsToCheck[%d]: { suite: '%s' (index: '%d'), value: '%s' (index: '%d') }\n", j,
@@ -561,7 +600,7 @@ public class GameService {
 				}
 				
 
-				int[] flushValues = new int[14];
+				int[] flushValues = new int[13];
 				
 				// Iterate through userSuites and find the flush suite.
 				for (int x = 0; x < userSuites.length; x++) {
@@ -588,7 +627,8 @@ public class GameService {
 							// Check for high card.
 							if ((straightTracker == 5) && flushValues[j] == 0) {
 								// If high card isn't an ace, then it's a straight flush.
-								if (highCardIndex != 13) {
+//								if (highCardIndex != 12) {
+								if (highCardIndex != this.values.length-1) {
 									System.out.println("STRAIGHT_FLUSH");
 									if (appUser.setHoldemWinType(STRAIGHT_FLUSH)) {
 										appUser.setHoldemWinString(String.format("straightFlush_%s", this.values[highCardIndex]));
@@ -658,7 +698,6 @@ public class GameService {
 			System.out.format("Winner: '%s'\n", game.getWinners()[0].getUsername());
 			System.out.format("appUser.getHoldemWinType(): '%s'\n", appUser.getHoldemWinType());
 			System.out.format("appUser.getHoldemWinString(): '%s'\n\n", appUser.getHoldemWinString());
-			return game.getWinners();
 		} else {
 			// Implement tie breaker logic/rules.
 			Player[] tempWinners = new Player[8];
@@ -670,7 +709,7 @@ public class GameService {
 				||	(appUser.getHoldemWinType() == PAIR)
 				||	(appUser.getHoldemWinType() == THREE_OF_A_KIND)
 				||	(appUser.getHoldemWinType() == STRAIGHT)
-				||  (appUser.getHoldemWinType() == ROYAL_FLUSH)
+				||  (appUser.getHoldemWinType() == FLUSH)
 				||	(appUser.getHoldemWinType() == FOUR_OF_A_KIND)
 				||  (appUser.getHoldemWinType() == STRAIGHT_FLUSH)
 				||  (appUser.getHoldemWinType() == ROYAL_FLUSH)
@@ -687,7 +726,11 @@ public class GameService {
 			
 			game.setWinners(tempWinners);
 		}
+
+		appUserSearch = appUserRepository.findByUsername(game.getWinners()[0].getUsername());
+		AppUser appUser = appUserSearch.get();
 		
+		game.setHoldemWinString(appUser.getHoldemWinString());
 
 		GameStorage.getInstance().setGame(game);
 
@@ -695,11 +738,13 @@ public class GameService {
 	}
 	
 	private Player[] getSingleHighCardTieBreaker(Player[] winners) {
+		System.out.println("Running getSingleHighCardTieBreaker()...");
 		Player[] tempWinners = new Player[8];
 		int bestHighCardIndex = -1;
 		// Iterate through all the winners and get player(s) with best high cards.
 		for (int i = 0; i < winners.length; i++) {
 			if (winners[i] == null) {
+				System.out.println("winners[" + Integer.toString(i) + "]: is NULL");
 				break;
 			}
 			Optional<AppUser> appUserSearch = appUserRepository.findByUsername(winners[i].getUsername());
@@ -722,12 +767,14 @@ public class GameService {
 	}
 	
 	private Player[] getDoubleHighCardTieBreaker(Player[] winners) {
+		System.out.println("Running getDoubleHighCardTieBreaker()...");
 		Player[] tempWinners = new Player[8];
 		int bestHighCardIndex = -1;
 		
 		// Iterate through all the winners and get player(s) with best dominant high cards.
 		for (int i = 0; i < winners.length; i++) {
 			if (winners[i] == null) {
+				System.out.println("winners[" + Integer.toString(i) + "]: is NULL");
 				break;
 			}
 			Optional<AppUser> appUserSearch = appUserRepository.findByUsername(winners[i].getUsername());
@@ -782,16 +829,7 @@ public class GameService {
 		
 		return tempWinnersFinal;
 	}
-////if ((appUser.getHoldemWinType() == TWO_PAIR) || (appUser.getHoldemWinType() == FULL_HOUSE)) {
-////// Check if high card is better than best high card.
-////if (this.getValueIndexByString(appUser.getHoldemWinString().split("-")[1].split("_")[1]) > bestThreeOfAKindIndex) {
-////	tempWinners = this.resetTempWinners(tempWinners);
-////	tempWinners = this.addToTempWinners(tempWinners, game.getWinners()[i]);
-////	bestHighCardIndex = this.getValueIndexByString(appUser.getHoldemWinString().split("_")[1]);
-////} else if (this.getValueIndexByString(appUser.getHoldemWinString().split("-")[1].split("_")[1]) == bestThreeOfAKindIndex) {
-////	tempWinners = this.addToTempWinners(tempWinners, game.getWinners()[i]);
-////}
-////}
+	
 	private Integer getSuiteIndexByString(String suite) {
 		int i;
 		for (i=0; i < this.suites.length; i++) {

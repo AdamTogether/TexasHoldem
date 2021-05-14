@@ -28,4 +28,8 @@ public class GameStorage {
 	public void setGame(Game pGame) {
 		games.put(pGame.getGameId(), pGame);
 	}
+	
+	public static void deleteGame(Game pGame) {
+		games.remove(pGame.getGameId());
+	}
 }
