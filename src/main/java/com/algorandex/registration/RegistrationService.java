@@ -42,7 +42,8 @@ public class RegistrationService {
 				)
 		);
 		
-		String confirmationLink = "http://localhost:8080/registration/confirm?token=" + token;
+//		String confirmationLink = "http://localhost:8080/registration/confirm?token=" + token;
+		String confirmationLink = "http://texasholdemonlinedemo-env.eba-nugyxqgx.us-east-2.elasticbeanstalk.com/registration/confirm?token=" + token;
 		emailSender.send(request.getEmail(), buildEmail(request.getFirstName(), confirmationLink));
 		
 		return token;

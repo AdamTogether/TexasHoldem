@@ -1,7 +1,8 @@
-const url = 'http://localhost:8080';
+const url = 'http://texasholdemonlinedemo-env.eba-nugyxqgx.us-east-2.elasticbeanstalk.com';
 let stompClient;
 let GAME_ID;
 let playerType;
+let MY_BALANCE = getMyBalance();
 
 function getMyCurrentHand() {
     $.ajax({
@@ -11,9 +12,31 @@ function getMyCurrentHand() {
         contentType: "application/json",
         success: function (currentHand) {
             console.log("Current hand: " + currentHand);
-            for (let i = 0; i < currentHand.length; i++) {
-                $("#hand_" + i.toString()).text(currentHand[i]);
+            if (currentHand[0] != null) {
+                for (let i = 0; i < currentHand.length; i++) {
+                    if (currentHand[i] == null) {
+                        break;
+                    }
+                    document.getElementById("hand_" + i.toString()).src="/images/" + currentHand[i] + ".jpg";
+                }
             }
+        },
+        error: function (error) {
+            console.log(error);
+        }
+    });
+}
+
+function getMyBalance() {
+    $.ajax({
+        url: url + "/game/myBalance",
+        type: 'GET',
+        contentType: "application/json",
+        success: function (formattedBalance) {
+            console.log("Getting balance...")
+            console.log("My balance: " + formattedBalance);
+            $("#myBalance").text("My Balance: " + formattedBalance);
+            MY_BALANCE = formattedBalance;
         },
         error: function (error) {
             console.log(error);
@@ -62,10 +85,11 @@ function createGame() {
         dataType: "json",
         contentType: "application/json",
         success: function (data) {
-            waitingForPlayer = true;
+            WAITING_FOR_GAME_TO_START = true;
             GAME_ID = data.gameId;
             reset();
             connectToSocket(data.gameId);
+            populateLobbyList(data);
             alert("Your created a game. Game id is: " + data.gameId);
             gameOn = true;
         },
@@ -76,6 +100,7 @@ function createGame() {
 }
 
 function startGame() {
+    WAITING_FOR_GAME_TO_START = false;
     $.ajax({
         url: url + "/game/startGame",
         type: 'POST',
@@ -97,6 +122,44 @@ function startGame() {
     });
 }
 
+function leaveLobby() {
+    WAITING_FOR_GAME_TO_START = false;
+    stompClient.disconnect(function() {alert("You have left the lobby.")});
+    $.ajax({
+        url: url + "/game/disconnect",
+        type: 'POST',
+        dataType: "json",
+        contentType: "application/json",
+        data: JSON.stringify({
+            "player": null,
+            "move": null,
+            "betAmount": null,
+            "gameId": GAME_ID
+        }),
+        success: function (data) {
+            console.log(data);
+            $("#pot").text("");
+            $("#checkAmount").text("");
+            document.getElementById("findGameInterface").classList.remove("hidden");
+            document.getElementById("startGame").classList.add("hidden");
+            document.getElementById("leaveLobby").classList.add("hidden");
+            document.getElementById("gameInterface_1").classList.add("hidden");
+            document.getElementById("gameInterface_2").classList.add("hidden");
+            document.getElementById("currentTurn").innerHTML = "";
+            document.getElementById("curGameId").innerHTML = "";
+            document.getElementById("currentLobby").innerHTML = "";
+            document.getElementById("winner").innerHTML = "";
+            for (let i = 0; i < 2; i++) {
+                $("#hand_" + i.toString()).text("");
+            }
+        },
+        error: function (error) {
+            console.log(error);
+            alert("You must finish the current game before leaving the lobby.");
+        }
+    });
+}
+
 function connectToRandom() {
     $.ajax({
         url: url + "/game/connect/random",
@@ -105,7 +168,7 @@ function connectToRandom() {
         contentType: "application/json",
         success: function (data) {
             alert("You've joined a game hosted by player '" + data.players[0].username + "'.");
-            waitingForPlayer = true;
+            WAITING_FOR_GAME_TO_START = true;
             GAME_ID = data.gameId;
             reset();
             populateLobbyList(data);
@@ -136,7 +199,7 @@ function connectToSpecificGame() {
         }),
         success: function (data) {
             alert("You've joined a game hosted by player '" + data.players[0].username + "'.");
-            waitingForPlayer = true;
+            WAITING_FOR_GAME_TO_START = true;
             GAME_ID = data.gameId;
             reset();
             populateLobbyList(data);
@@ -144,6 +207,7 @@ function connectToSpecificGame() {
             gameOn = true;
         },
         error: function (error) {
+            alert("Could not find a game with Game ID '" + GAME_ID + "'. Try creating your own!")
             console.log(error);
         }
     })
@@ -170,12 +234,13 @@ function populateLobbyList(data) {
 }
 
 function reset() {
-    // turns = [["#", "#", "#"], ["#", "#", "#"], ["#", "#", "#"]];
-    $(".tic").text("#");
     $("#pot").text("");
     $("#checkAmount").text("");
+    document.getElementById("findGameInterface").classList.add("hidden");
     document.getElementById("startGame").classList.remove("hidden");
-    document.getElementById("gameInterface").classList.add("hidden");
+    document.getElementById("leaveLobby").classList.remove("hidden");
+    document.getElementById("gameInterface_1").classList.add("hidden");
+    document.getElementById("gameInterface_2").classList.add("hidden");
     document.getElementById("currentTurn").innerHTML = "";
     document.getElementById("curGameId").innerHTML = "Game ID: " + GAME_ID + "";
     document.getElementById("currentLobby").innerHTML = "";
